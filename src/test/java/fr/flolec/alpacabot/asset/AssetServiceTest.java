@@ -1,5 +1,6 @@
 package fr.flolec.alpacabot.asset;
 
+import fr.flolec.alpacabot.AlpacaBotApplication;
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetService;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(classes = AlpacaBotApplication.class)
 public class AssetServiceTest {
 
     @Autowired

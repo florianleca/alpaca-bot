@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@PropertySource("classpath:application-secret.properties")
+//@PropertySource("classpath:application-secret.properties")
 public class AlpacaBotApplication {
 
 	public static void main(String[] args) {

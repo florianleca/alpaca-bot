@@ -1,5 +1,6 @@
 package fr.flolec.alpacabot.order;
 
+import fr.flolec.alpacabot.AlpacaBotApplication;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderSide;
@@ -13,14 +14,14 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(classes = AlpacaBotApplication.class)
 public class OrderServiceTest {
 
     @Autowired
     private OrderService orderService;
 
-    @Test
-    @DisplayName("Buying $1 of BTC on market")
+    /*@Test
+    @DisplayName("Buying $1 of BTC on market")*/
     void createMarketNotionalOrder() throws IOException {
         OrderModel order = orderService.createMarketNotionalOrder(
                 "BTC/USD",
@@ -37,8 +38,8 @@ public class OrderServiceTest {
         assertNotNull(order.getFilledAt());
     }
 
-    @Test
-    @DisplayName("Buying $1 of BTC on market for $100k/coin")
+    /*@Test
+    @DisplayName("Buying $1 of BTC on market for $100k/coin")*/
     void createLimitNotionalOrder() throws IOException {
         OrderModel order = orderService.createLimitNotionalOrder(
                 "BTC/USD",

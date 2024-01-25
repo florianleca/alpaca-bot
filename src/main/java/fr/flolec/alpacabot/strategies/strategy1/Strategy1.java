@@ -112,7 +112,7 @@ public class Strategy1 {
     }
 
     private boolean maxHighIsOrdinary(AssetModel asset, double maxHigh) throws IOException {
-        double moreGlobalMax = barService.getMaxHighOnPeriod(asset, BarTimeFrame._1DAY, weeksBackForGlobalMax, PeriodLengthUnit.WEEK);
+        double moreGlobalMax = barService.getMaxHighOnPeriod(asset, BarTimeFrame.DAY1, weeksBackForGlobalMax, PeriodLengthUnit.WEEK);
         boolean maxHighIsOrdinary = maxHigh < (1 - (globalMaxPercentage / 100)) * moreGlobalMax;
         if (maxHighIsOrdinary) logger.info("[\uD83D\uDFE2 Past week max value: $" + moreGlobalMax);
         else logger.info("[\uD83D\uDD34\uD83D\uDD34 Past week max value: $" + moreGlobalMax);
@@ -143,7 +143,7 @@ public class Strategy1 {
     }
 
     private void logAssetThresholdState(AssetModel asset, double decreasePercent, double maxHigh) {
-        String decreasedPercentString = new BigDecimal(decreasePercent)
+        String decreasedPercentString = BigDecimal.valueOf(decreasePercent)
                 .setScale(2, RoundingMode.HALF_DOWN)
                 .toString();
         String state;

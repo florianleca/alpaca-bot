@@ -1,5 +1,6 @@
 package fr.flolec.alpacabot.latestquote;
 
+import fr.flolec.alpacabot.AlpacaBotApplication;
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetService;
 import fr.flolec.alpacabot.alpacaapi.httprequests.latestquote.LatestQuoteService;
@@ -14,7 +15,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(classes = AlpacaBotApplication.class)
 public class LatestQuoteServiceTest {
 
     private final Logger logger = LoggerFactory.getLogger(LatestQuoteServiceTest.class);

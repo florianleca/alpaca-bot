@@ -14,10 +14,16 @@ import java.io.IOException;
 public class HttpRequestService {
 
     private final OkHttpClient okHttpClient = getOkHttpClient();
-    @Value("${ALPACA_API_KEY_ID}")
-    private String keyId;
-    @Value("${ALPACA_API_SECRET_KEY}")
-    private String secretKey;
+    private final String keyId;
+    private final String secretKey;
+
+
+
+    public HttpRequestService(@Value("${ALPACA_API_KEY_ID}") String keyId,
+                              @Value("${ALPACA_API_SECRET_KEY}") String secretKey) {
+        this.keyId = keyId;
+        this.secretKey = secretKey;
+    }
 
     @Bean
     public OkHttpClient getOkHttpClient() {
@@ -25,41 +31,32 @@ public class HttpRequestService {
     }
 
     public Response get(String url) throws IOException {
-        Request request = new Request.Builder()
+        Request.Builder request = new Request.Builder()
                 .url(url)
-                .get()
-                .addHeader("accept", "application/json")
-                .addHeader("APCA-API-KEY-ID", keyId)
-                .addHeader("APCA-API-SECRET-KEY", secretKey)
-                .build();
-        return okHttpClient.newCall(request).execute();
+                .get();
+        return addHeadersAndExecute(request);
     }
 
-//    String url = HttpUrl.parse(endpoint + orderId).newBuilder()
-//            .addQueryParameter("", "")
-//            .build()
-//            .toString();
-
     public Response post(String url, RequestBody body) throws IOException {
-        Request request = new Request.Builder()
+        Request.Builder request = new Request.Builder()
                 .url(url)
-                .post(body)
-                .addHeader("accept", "application/json")
-                .addHeader("APCA-API-KEY-ID", keyId)
-                .addHeader("APCA-API-SECRET-KEY", secretKey)
-                .build();
-        return okHttpClient.newCall(request).execute();
+                .post(body);
+        return addHeadersAndExecute(request);
     }
 
     public Response delete(String url) throws IOException {
-        Request request = new Request.Builder()
+        Request.Builder request = new Request.Builder()
                 .url(url)
-                .delete(null)
-                .addHeader("accept", "application/json")
+                .delete(null);
+        return addHeadersAndExecute(request);
+    }
+
+    public Response addHeadersAndExecute(Request.Builder request) throws IOException {
+        Request builtRequest = request.addHeader("accept", "application/json")
                 .addHeader("APCA-API-KEY-ID", keyId)
                 .addHeader("APCA-API-SECRET-KEY", secretKey)
                 .build();
-        return okHttpClient.newCall(request).execute();
+        return okHttpClient.newCall(builtRequest).execute();
     }
 
 }

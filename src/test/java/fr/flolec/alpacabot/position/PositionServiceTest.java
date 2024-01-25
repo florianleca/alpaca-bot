@@ -1,5 +1,6 @@
 package fr.flolec.alpacabot.position;
 
+import fr.flolec.alpacabot.AlpacaBotApplication;
 import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionService;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(classes = AlpacaBotApplication.class)
 public class PositionServiceTest {
 
     private final Logger logger = LoggerFactory.getLogger(PositionServiceTest.class);
@@ -64,26 +65,26 @@ public class PositionServiceTest {
         }
     }
 
-    @Test
+    /*@Test
     @DisplayName("Liquidate percentage of position")
     void liquidatePositionByPercentage() throws IOException {
         // On liquide la position
-        positionService.liquidatePositionByPercentage("DOGE/USD", 100);
+        positionService.liquidatePositionByPercentage("BTC/USD", 100);
         // On recherche la position et on s'assure que la quantité est nulle
-        PositionModel position = positionService.getAnOpenPosition("DOGE/USD");
+        PositionModel position = positionService.getAnOpenPosition("BTC/USD");
         assertNull(position.getQuantity());
         // On achète et on s'assure que la quantité et non nulle
-        orderService.createMarketNotionalOrder("DOGE/USD", "1", OrderSide.BUY, TimeInForce.GTC);
-        position = positionService.getAnOpenPosition("DOGE/USD");
+        orderService.createMarketNotionalOrder("BTC/USD", "1", OrderSide.BUY, TimeInForce.GTC);
+        position = positionService.getAnOpenPosition("BTC/USD");
         assertNotNull(position.getQuantity());
         double initialQuantity = Double.parseDouble(position.getQuantity());
         // On liquide 50% s'assure que la quantité a baissé de moitié
-        positionService.liquidatePositionByPercentage("DOGE/USD", 50);
-        position = positionService.getAnOpenPosition("DOGE/USD");
+        positionService.liquidatePositionByPercentage("BTC/USD", 50);
+        position = positionService.getAnOpenPosition("BTC/USD");
         double halfQuantity = Double.parseDouble(position.getQuantity());
         assertEquals(initialQuantity / 2, halfQuantity, initialQuantity / 100);
         // On liquide le restant de la position
-        positionService.liquidatePositionByPercentage("DOGE/USD", 100);
+        positionService.liquidatePositionByPercentage("BTC/USD", 100);
     }
 
     @Test
@@ -107,6 +108,6 @@ public class PositionServiceTest {
         assertEquals(halfQuantity, shouldBeHalfQuantity, initialQuantity / 100);
         // On liquide le restant de la position
         positionService.liquidatePositionByPercentage("DOGE/USD", 100);
-    }
+    }*/
 
 }

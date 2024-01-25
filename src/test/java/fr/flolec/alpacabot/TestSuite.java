@@ -4,6 +4,7 @@ import fr.flolec.alpacabot.accountdetails.AccountDetailsServiceTest;
 import fr.flolec.alpacabot.asset.AssetServiceTest;
 import fr.flolec.alpacabot.bar.BarServiceTest;
 import fr.flolec.alpacabot.alpacaapi.httprequests.latestquote.LatestQuoteService;
+import fr.flolec.alpacabot.latestquote.LatestQuoteServiceTest;
 import fr.flolec.alpacabot.order.OrderServiceTest;
 import fr.flolec.alpacabot.position.PositionServiceTest;
 import org.junit.platform.suite.api.SelectClasses;
@@ -15,7 +16,7 @@ import org.junit.platform.suite.api.Suite;
         AccountDetailsServiceTest.class,
         AssetServiceTest.class,
         BarServiceTest.class,
-        LatestQuoteService.class,
+        LatestQuoteServiceTest.class,
         OrderServiceTest.class,
         PositionServiceTest.class,
         })

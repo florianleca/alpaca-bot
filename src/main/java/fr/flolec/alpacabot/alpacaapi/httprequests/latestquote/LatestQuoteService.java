@@ -15,14 +15,18 @@ import java.io.IOException;
 @Component
 public class LatestQuoteService {
 
-    @Value("${PAPER_LATEST_QUOTES_ENDPOINT}")
-    private String endpoint;
+    private final String endpoint;
+    private final ObjectMapper objectMapper;
+    private final HttpRequestService httpRequestService;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private HttpRequestService httpRequestService;
+    public LatestQuoteService(@Value("${PAPER_LATEST_QUOTES_ENDPOINT}") String endpoint,
+                              ObjectMapper objectMapper,
+                              HttpRequestService httpRequestService) {
+        this.endpoint = endpoint;
+        this.objectMapper = objectMapper;
+        this.httpRequestService = httpRequestService;
+    }
 
     public double getLatestQuote(AssetModel asset) throws IOException {
         return getLatestQuote(asset.getSymbol());

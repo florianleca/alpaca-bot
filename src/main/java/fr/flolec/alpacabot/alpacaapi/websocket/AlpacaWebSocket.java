@@ -12,14 +12,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class AlpacaWebSocket {
 
-    @Autowired
-    private OkHttpClient okHttpClient;
+    private final OkHttpClient okHttpClient;
+    private final AlpacaWebSocketListener alpacaWebSocketListener;
+    private final String webSocketUri;
 
     @Autowired
-    private AlpacaWebSocketListener alpacaWebSocketListener;
-
-    @Value("${WEBSOCKET_URI}")
-    private String webSocketUri;
+    public AlpacaWebSocket(@Value("${WEBSOCKET_URI}") String webSocketUri,
+                           OkHttpClient okHttpClient,
+                           AlpacaWebSocketListener alpacaWebSocketListener) {
+        this.okHttpClient = okHttpClient;
+        this.alpacaWebSocketListener = alpacaWebSocketListener;
+        this.webSocketUri = webSocketUri;
+    }
 
     @PostConstruct
     public void init() {

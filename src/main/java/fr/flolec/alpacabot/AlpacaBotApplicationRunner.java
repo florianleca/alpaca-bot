@@ -9,8 +9,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class AlpacaBotApplicationRunner implements ApplicationRunner {
 
+    private final OrderService orderService;
+
     @Autowired
-    OrderService orderService;
+    public AlpacaBotApplicationRunner(OrderService orderService) {
+        this.orderService = orderService;
+    }
 
     @Override
     public void run(ApplicationArguments args) {
