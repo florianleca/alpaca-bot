@@ -51,13 +51,13 @@ public class AlpacaWebSocketListener extends WebSocketListener {
 
     @Override
     public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
-        logger.info(String.format("Received message: %s", text));
+        logger.info("Received message: {}", text);
     }
 
     @Override
     public void onMessage(@NotNull WebSocket webSocket, ByteString bytes) {
         String message = bytes.utf8();
-        logger.info(String.format("Received bytes: %s", message));
+        logger.info("Received bytes: {}", message);
         if (message.contains("\"event\":\"fill\"")) {
             orderService.fillOrder(message);
         }
@@ -66,7 +66,7 @@ public class AlpacaWebSocketListener extends WebSocketListener {
     @Override
     public void onClosing(WebSocket webSocket, int code, @NotNull String reason) {
         webSocket.close(1000, null);
-        logger.info(String.format("WebSocket closing: %d %s", code, reason));
+        logger.info("WebSocket closing: {} - {}", code, reason);
     }
 
     @Override
