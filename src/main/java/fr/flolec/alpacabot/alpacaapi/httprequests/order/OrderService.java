@@ -56,33 +56,33 @@ public class OrderService {
      */
     public OrderModel createMarketNotionalOrder(String symbol, String notional, OrderSide side, TimeInForce timeInForce) throws IOException {
         ObjectNode jsonBody = objectMapper.createObjectNode()
-                .put("symbol", symbol)
-                .put("notional", notional)
-                .put("side", side.toString())
-                .put("type", "market")
-                .put("time_in_force", timeInForce.toString());
+                .put(OrderFieldsNames.SYMBOL.toString(), symbol)
+                .put(OrderFieldsNames.NOTIONAL.toString(), notional)
+                .put(OrderFieldsNames.SIDE.toString(), side.toString())
+                .put(OrderFieldsNames.TYPE.toString(), "market")
+                .put(OrderFieldsNames.TIME_IN_FORCE.toString(), timeInForce.toString());
         return sendOrder(symbol, jsonBody);
     }
 
     public OrderModel createLimitNotionalOrder(String symbol, String notional, OrderSide side, TimeInForce timeInForce, String limitPrice) throws IOException {
         ObjectNode jsonBody = objectMapper.createObjectNode()
-                .put("symbol", symbol)
-                .put("notional", notional)
-                .put("side", side.toString())
-                .put("type", "limit")
-                .put("time_in_force", timeInForce.toString())
-                .put("limit_price", limitPrice);
+                .put(OrderFieldsNames.SYMBOL.toString(), symbol)
+                .put(OrderFieldsNames.NOTIONAL.toString(), notional)
+                .put(OrderFieldsNames.SIDE.toString(), side.toString())
+                .put(OrderFieldsNames.TYPE.toString(), "limit")
+                .put(OrderFieldsNames.TIME_IN_FORCE.toString(), timeInForce.toString())
+                .put(OrderFieldsNames.LIMIT_PRICE.toString(), limitPrice);
         return sendOrder(symbol, jsonBody);
     }
 
     public OrderModel createLimitQuantityOrder(String symbol, String quantity, OrderSide side, TimeInForce timeInForce, String limitPrice) throws IOException {
         ObjectNode jsonBody = objectMapper.createObjectNode()
-                .put("symbol", symbol)
-                .put("qty", quantity)
-                .put("side", side.toString())
-                .put("type", "limit")
-                .put("time_in_force", timeInForce.toString())
-                .put("limit_price", limitPrice);
+                .put(OrderFieldsNames.SYMBOL.toString(), symbol)
+                .put(OrderFieldsNames.QUANTITY.toString(), quantity)
+                .put(OrderFieldsNames.SIDE.toString(), side.toString())
+                .put(OrderFieldsNames.TYPE.toString(), "limit")
+                .put(OrderFieldsNames.TIME_IN_FORCE.toString(), timeInForce.toString())
+                .put(OrderFieldsNames.LIMIT_PRICE.toString(), limitPrice);
         return sendOrder(symbol, jsonBody);
     }
 
