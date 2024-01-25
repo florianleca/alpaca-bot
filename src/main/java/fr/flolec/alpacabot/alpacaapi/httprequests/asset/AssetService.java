@@ -18,14 +18,18 @@ import java.util.List;
 @Component
 public class AssetService {
 
-    @Value("${PAPER_ASSETS_ENDPOINT}")
-    private String endpoint;
+    private final String endpoint;
+    private final ObjectMapper objectMapper;
+    private final HttpRequestService httpRequestService;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private HttpRequestService httpRequestService;
+    public AssetService(@Value("${PAPER_ASSETS_ENDPOINT}") String endpoint,
+                        ObjectMapper objectMapper,
+                        HttpRequestService httpRequestService) {
+        this.endpoint = endpoint;
+        this.objectMapper = objectMapper;
+        this.httpRequestService = httpRequestService;
+    }
 
     /**
      * @return Sorted list of all active crypto assets in USD

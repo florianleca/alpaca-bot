@@ -19,14 +19,18 @@ import java.util.Locale;
 @Component
 public class PositionService {
 
-    @Value("${PAPER_POSITIONS_ENDPOINT}")
-    private String endpoint;
+    private final String endpoint;
+    private final ObjectMapper objectMapper;
+    private final HttpRequestService httpRequestService;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private HttpRequestService httpRequestService;
+    public PositionService(@Value("${PAPER_POSITIONS_ENDPOINT}") String endpoint,
+                           ObjectMapper objectMapper,
+                           HttpRequestService httpRequestService) {
+        this.endpoint = endpoint;
+        this.objectMapper = objectMapper;
+        this.httpRequestService = httpRequestService;
+    }
 
     // Liquidate = sell order at market price
     public OrderModel liquidatePositionByPercentage(String symbol, double percentage) {

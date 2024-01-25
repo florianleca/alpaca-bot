@@ -15,16 +15,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class AlpacaWebSocketListener extends WebSocketListener {
 
-    @Value("${ALPACA_API_KEY_ID}")
-    private String keyId;
-
-    @Value("${ALPACA_API_SECRET_KEY}")
-    private String secretKey;
+    private final String keyId;
+    private final String secretKey;
+    private final OrderService orderService;
+    private final Logger logger = LoggerFactory.getLogger(AlpacaWebSocketListener.class);
 
     @Autowired
-    private OrderService orderService;
-
-    private final Logger logger = LoggerFactory.getLogger(AlpacaWebSocketListener.class);
+    public AlpacaWebSocketListener(@Value("${ALPACA_API_KEY_ID}") String keyId,
+                                   @Value("${ALPACA_API_SECRET_KEY}") String secretKey,
+                                   OrderService orderService) {
+        this.keyId = keyId;
+        this.secretKey = secretKey;
+        this.orderService = orderService;
+    }
 
     @Override
     public void onOpen(WebSocket webSocket, @NotNull Response response) {

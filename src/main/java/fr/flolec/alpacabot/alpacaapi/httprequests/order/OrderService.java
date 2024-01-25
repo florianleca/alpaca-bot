@@ -22,25 +22,28 @@ import java.util.List;
 @Service
 public class OrderService {
 
-    @Value("${PAPER_ORDERS_ENDPOINT}")
-    private String endpoint;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private HttpRequestService httpRequestService;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private PositionService positionService;
-
-    @Value("${GAIN_PERCENTAGE}")
-    private double gainPercentage;
-
+    private final String endpoint;
+    private final ObjectMapper objectMapper;
+    private final HttpRequestService httpRequestService;
+    private final OrderRepository orderRepository;
+    private final PositionService positionService;
+    private final double gainPercentage;
     private final Logger logger = LoggerFactory.getLogger(OrderService.class);
+
+    @Autowired
+    public OrderService(@Value("${PAPER_ORDERS_ENDPOINT}") String endpoint,
+                        @Value("${GAIN_PERCENTAGE}") double gainPercentage,
+                        ObjectMapper objectMapper,
+                        HttpRequestService httpRequestService,
+                        OrderRepository orderRepository,
+                        PositionService positionService) {
+        this.endpoint = endpoint;
+        this.objectMapper = objectMapper;
+        this.httpRequestService = httpRequestService;
+        this.orderRepository = orderRepository;
+        this.positionService = positionService;
+        this.gainPercentage = gainPercentage;
+    }
 
     /**
      *

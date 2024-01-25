@@ -13,14 +13,19 @@ import java.io.IOException;
 @Component
 public class AccountDetailsService {
 
-    @Value("${PAPER_ACCOUNT_ENDPOINT}")
-    private String endpoint;
+
+    private final String endpoint;
+    private final ObjectMapper objectMapper;
+    private final HttpRequestService httpRequestService;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private HttpRequestService httpRequestService;
+    public AccountDetailsService(@Value("${PAPER_ACCOUNT_ENDPOINT}") String endpoint,
+                                 ObjectMapper objectMapper,
+                                 HttpRequestService httpRequestService) {
+        this.endpoint = endpoint;
+        this.objectMapper = objectMapper;
+        this.httpRequestService = httpRequestService;
+    }
 
     /**
      * @return Details of account linked to given keys

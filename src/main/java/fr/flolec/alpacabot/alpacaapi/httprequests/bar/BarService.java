@@ -20,14 +20,18 @@ import java.util.List;
 @Component
 public class BarService {
 
-    @Value("${PAPER_BARS_ENDPOINT}")
-    private String endpoint;
+    private final String endpoint;
+    private final ObjectMapper objectMapper;
+    private final HttpRequestService httpRequestService;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private HttpRequestService httpRequestService;
+    public BarService(@Value("${PAPER_BARS_ENDPOINT}") String endpoint,
+                      ObjectMapper objectMapper,
+                      HttpRequestService httpRequestService) {
+        this.endpoint = endpoint;
+        this.objectMapper = objectMapper;
+        this.httpRequestService = httpRequestService;
+    }
 
 
     /**
