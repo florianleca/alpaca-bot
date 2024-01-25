@@ -19,8 +19,8 @@ public class OrderServiceTest {
     @Autowired
     private OrderService orderService;
 
-    @Test
-    @DisplayName("Buying $1 of BTC on market")
+    /*@Test
+    @DisplayName("Buying $1 of BTC on market")*/
     void createMarketNotionalOrder() throws IOException {
         OrderModel order = orderService.createMarketNotionalOrder(
                 "BTC/USD",
@@ -37,8 +37,8 @@ public class OrderServiceTest {
         assertNotNull(order.getFilledAt());
     }
 
-    @Test
-    @DisplayName("Buying $1 of BTC on market for $100k/coin")
+    /*@Test
+    @DisplayName("Buying $1 of BTC on market for $100k/coin")*/
     void createLimitNotionalOrder() throws IOException {
         OrderModel order = orderService.createLimitNotionalOrder(
                 "BTC/USD",

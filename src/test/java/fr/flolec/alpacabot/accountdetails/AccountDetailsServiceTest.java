@@ -21,8 +21,8 @@ public class AccountDetailsServiceTest {
     @Test
     void getAccountDetails() throws IOException {
         AccountDetailsModel accountInformations = accountDetailsService.getAccountDetails();
-        assertEquals(accountInformations.getStatus(), "ACTIVE");
-        assertEquals(accountInformations.getCryptoStatus(), "ACTIVE");
-        assertEquals(accountInformations.getCurrency(), "USD");
+        assertEquals("ACTIVE", accountInformations.getStatus());
+        assertEquals("ACTIVE", accountInformations.getCryptoStatus());
+        assertEquals("USD", accountInformations.getCurrency());
     }
 }
