@@ -33,7 +33,7 @@ public class BarServiceTest {
     @DisplayName("1 daily bar in the last 24 hours")
     void getHistoricalBars1Daily24Hours() throws IOException {
         AssetModel unAsset = assetService.getAssetsList().get(0);
-        List<BarModel> bars = barService.getHistoricalBars(unAsset, BarTimeFrame._1DAY, 24, PeriodLengthUnit.HOUR);
+        List<BarModel> bars = barService.getHistoricalBars(unAsset, BarTimeFrame.DAY1, 24, PeriodLengthUnit.HOUR);
         logger.info("Number of daily bars in the last 24h: " + bars.size());
         assertEquals(1, bars.size());
     }
@@ -42,7 +42,7 @@ public class BarServiceTest {
     @DisplayName("7 daily bar in the last week")
     void getHistoricalBars7Daily1Week() throws IOException {
         AssetModel unAsset = assetService.getAssetsList().get(0);
-        List<BarModel> bars = barService.getHistoricalBars(unAsset, BarTimeFrame._1DAY, 1, PeriodLengthUnit.WEEK);
+        List<BarModel> bars = barService.getHistoricalBars(unAsset, BarTimeFrame.DAY1, 1, PeriodLengthUnit.WEEK);
         logger.info("Number of daily bars in the last week: " + bars.size());
         assertEquals(7, bars.size());
     }
@@ -51,9 +51,9 @@ public class BarServiceTest {
     @DisplayName("Local max locals lower than global max")
     void getMaxHighOnPeriod() throws IOException {
         AssetModel unAsset = assetService.getAssetsList().get(0);
-        double max1minDuring1day = barService.getMaxHighOnPeriod(unAsset, BarTimeFrame._1MIN, 1, PeriodLengthUnit.DAY);
-        double max1hourDuring1week = barService.getMaxHighOnPeriod(unAsset, BarTimeFrame._1HOUR, 1, PeriodLengthUnit.WEEK);
-        double max1dayDuring1month = barService.getMaxHighOnPeriod(unAsset, BarTimeFrame._1DAY, 1, PeriodLengthUnit.MONTH);
+        double max1minDuring1day = barService.getMaxHighOnPeriod(unAsset, BarTimeFrame.MIN1, 1, PeriodLengthUnit.DAY);
+        double max1hourDuring1week = barService.getMaxHighOnPeriod(unAsset, BarTimeFrame.HOUR1, 1, PeriodLengthUnit.WEEK);
+        double max1dayDuring1month = barService.getMaxHighOnPeriod(unAsset, BarTimeFrame.DAY1, 1, PeriodLengthUnit.MONTH);
         logger.info("Maximum values of " + unAsset.getSymbol() + " during the last...");
         logger.info("...day: $" + max1minDuring1day);
         logger.info("...week: $" + max1hourDuring1week);
