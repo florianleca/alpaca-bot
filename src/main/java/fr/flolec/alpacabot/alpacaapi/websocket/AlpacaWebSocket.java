@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class AlpacaWebSocket {
 
+    private WebSocket webSocket;
+
     private final OkHttpClient okHttpClient;
     private final AlpacaWebSocketListener alpacaWebSocketListener;
     private final String webSocketUri;
@@ -26,13 +28,15 @@ public class AlpacaWebSocket {
     }
 
     @PostConstruct
-    public void init() {
+    public void openSocket() {
         Request request = new Request.Builder()
                 .url(webSocketUri)
                 .build();
-        WebSocket webSocket = okHttpClient.newWebSocket(request, alpacaWebSocketListener);
-        // Close the WebSocket when done
-        // webSocket.close(1000, "Goodbye, WebSocket!");
+        webSocket = okHttpClient.newWebSocket(request, alpacaWebSocketListener);
+    }
+
+    public void closeSocket() {
+        webSocket.close(1000, "Closed web socket");
     }
 }
 

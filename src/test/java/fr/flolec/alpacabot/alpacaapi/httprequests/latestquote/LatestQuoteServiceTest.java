@@ -1,9 +1,8 @@
-package fr.flolec.alpacabot.latestquote;
+package fr.flolec.alpacabot.alpacaapi.httprequests.latestquote;
 
 import fr.flolec.alpacabot.AlpacaBotApplication;
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetService;
-import fr.flolec.alpacabot.alpacaapi.httprequests.latestquote.LatestQuoteService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -13,7 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = AlpacaBotApplication.class)
 public class LatestQuoteServiceTest {
@@ -29,9 +28,9 @@ public class LatestQuoteServiceTest {
     @Test
     @DisplayName("The latest quote of an asset is a positive number")
     void getLatestQuote() throws IOException {
-        AssetModel unAsset = assetService.getAssetsList().get(0);
-        double latestQuote = latestQuoteService.getLatestQuote(unAsset);
-        logger.info("Latest quote of asset " + unAsset.getSymbol() + ": $" + latestQuote);
+        AssetModel asset = assetService.getAssetsList().get(0);
+        double latestQuote = latestQuoteService.getLatestQuote(asset);
+        logger.info("Latest quote of asset " + asset.getSymbol() + ": $" + latestQuote);
         assertTrue(latestQuote > 0);
     }
 }

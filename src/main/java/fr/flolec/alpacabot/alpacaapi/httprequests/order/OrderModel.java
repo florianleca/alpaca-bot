@@ -33,10 +33,6 @@ public class OrderModel {
     @JsonProperty("canceled_at")
     private Date canceledAt;
 
-    @Field("asset_id")
-    @JsonProperty("asset_id")
-    private String assetId;
-
     @Field("symbol")
     @JsonProperty("symbol")
     private String symbol;
@@ -69,10 +65,6 @@ public class OrderModel {
     @JsonProperty("time_in_force")
     private String timeInForce;
 
-    @Field("type")
-    @JsonProperty("type")
-    private String type;
-
     @Field("limit_price")
     @JsonProperty("limit_price")
     private double limitPrice;
@@ -86,37 +78,27 @@ public class OrderModel {
 
     private double positionQtyBeforeOrder;
 
-    // Unused properties:
-    //      client_order_id
-    //      updated_at
-    //      submitted_at
-    //      expired_at
-    //      failed_at
-    //      replaced_at
-    //      replaced_by
-    //      replaces
-    //      asset_class
-    //      order_class
-    //      stop_price
-    //      extended_hours
-    //      legs
-    //      trail_percent
-    //      trail_price
-    //      hwm
-    //      subtag
-    //      source
+    /*
+     Unused properties:
+          client_order_id
+          updated_at
+          submitted_at
+          expired_at
+          failed_at
+          replaced_at
+          replaced_by
+          replaces
+          asset_class
+          order_class
+          stop_price
+          extended_hours
+          legs
+          trail_percent
+          trail_price
+          hwm
+          subtag
+          source
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        OrderModel that = (OrderModel) o;
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+     */
 
 }

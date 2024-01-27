@@ -33,29 +33,30 @@ public class PositionService {
     }
 
     // Liquidate = sell order at market price
-    public OrderModel liquidatePositionByPercentage(String symbol, double percentage) {
+    public void liquidatePositionByPercentage(String symbol, double percentage) {
         symbol = takeSlashOutOfSymbol(symbol);
         String url = HttpUrl.parse(endpoint + "/" + symbol).newBuilder()
                 .addQueryParameter("percentage", String.format(Locale.US, "%.9f", percentage))
                 .toString();
-        return liquidatePosition(url);
+        liquidatePosition(url);
     }
 
-    public OrderModel liquidatePositionByQuantity(String symbol, double coinQuantity) {
+    public void liquidatePositionByQuantity(String symbol, double coinQuantity) {
         symbol = takeSlashOutOfSymbol(symbol);
         String url = HttpUrl.parse(endpoint + "/" + symbol).newBuilder()
                 .addQueryParameter("qty", String.format(Locale.US, "%.9f", coinQuantity))
                 .toString();
-        return liquidatePosition(url);
+        liquidatePosition(url);
     }
 
-    public OrderModel liquidatePosition(String url) {
+    private void liquidatePosition(String url) {
         Response response;
         JsonNode jsonNode;
         try {
             response = httpRequestService.delete(url);
-            jsonNode = objectMapper.readTree(response.body().string());
-            return objectMapper.treeToValue(jsonNode, OrderModel.class);
+            String responseString = response.body().string();
+            jsonNode = objectMapper.readTree(responseString);
+            objectMapper.treeToValue(jsonNode, OrderModel.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

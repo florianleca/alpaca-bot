@@ -1,12 +1,12 @@
 package fr.flolec.alpacabot;
 
-import fr.flolec.alpacabot.accountdetails.AccountDetailsServiceTest;
-import fr.flolec.alpacabot.asset.AssetServiceTest;
-import fr.flolec.alpacabot.bar.BarServiceTest;
-import fr.flolec.alpacabot.alpacaapi.httprequests.latestquote.LatestQuoteService;
-import fr.flolec.alpacabot.latestquote.LatestQuoteServiceTest;
-import fr.flolec.alpacabot.order.OrderServiceTest;
-import fr.flolec.alpacabot.position.PositionServiceTest;
+import fr.flolec.alpacabot.alpacaapi.httprequests.accountdetails.AccountDetailsServiceTest;
+import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetServiceTest;
+import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarServiceTest;
+import fr.flolec.alpacabot.alpacaapi.httprequests.latestquote.LatestQuoteServiceTest;
+import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderServiceTest;
+import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionServiceTest;
+import fr.flolec.alpacabot.strategies.strategy1.Strategy1Test;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
@@ -19,6 +19,7 @@ import org.junit.platform.suite.api.Suite;
         LatestQuoteServiceTest.class,
         OrderServiceTest.class,
         PositionServiceTest.class,
+        Strategy1Test.class
         })
 public class TestSuite {
 }

@@ -25,29 +25,11 @@ public class AccountDetailsModel {
     @JsonProperty("currency")
     private String currency;
 
-    @JsonProperty("buying_power")
-    private String buyingPower;
-
-    @JsonProperty("regt_buying_power")
-    private String regtBuyingPower;
-
-    @JsonProperty("daytrading_buying_power")
-    private String daytradingBuyingPower;
-
-    @JsonProperty("effective_buying_power")
-    private String effectiveBuyingPower;
-
-    @JsonProperty("non_marginable_buying_power")
-    private String nonMarginableBuyingPower;
-
     @JsonProperty("cash")
     private String cash;
 
     @JsonProperty("pending_transfer_in")
     private String pendingTransferIn;
-
-    @JsonProperty("portfolio_value")
-    private String portfolioValue;
 
     @JsonProperty("trading_blocked")
     private Boolean tradingBlocked;
@@ -61,7 +43,7 @@ public class AccountDetailsModel {
     @JsonProperty("created_at")
     private Date createdAt;
 
-    @JsonProperty("daytrade_count")
-    private String daytradeCount;
+    @JsonProperty("equity")
+    private String equity;
 
 }
