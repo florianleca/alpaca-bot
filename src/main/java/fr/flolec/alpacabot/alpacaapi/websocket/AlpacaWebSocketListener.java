@@ -59,7 +59,7 @@ public class AlpacaWebSocketListener extends WebSocketListener {
         String message = bytes.utf8();
         logger.info("Received bytes: {}", message);
         if (message.contains("\"event\":\"fill\"")) {
-            orderService.fillOrder(message);
+            orderService.processFilledOrderFromWebSocketMessage(message);
         }
     }
 

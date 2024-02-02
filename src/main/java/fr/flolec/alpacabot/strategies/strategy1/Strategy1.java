@@ -64,7 +64,7 @@ public class Strategy1 {
 
     private final Logger logger = LoggerFactory.getLogger(Strategy1.class);
 
-    @Scheduled(cron = "0 */1 * * * *")
+    //@Scheduled(cron = "0 */1 * * * *")
     public void checkBuyOpportunities() throws IOException {
         logger.info("[STRATEGY 1] [BUY OPPORTUNITIES]");
         List<AssetModel> assets = assetService.getAssetsList();

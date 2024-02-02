@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import fr.flolec.alpacabot.alpacaapi.httprequests.HttpRequestService;
+import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionService;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
@@ -88,54 +89,37 @@ public class OrderService {
 
     @NotNull
     private OrderModel sendOrder(String symbol, ObjectNode jsonBody) throws IOException {
+        // Récupérer la quantité de cet asset possédée avant l'ordre pour plus tard set l'attribut de l'ordre
+        double qtyBeforeOrder;
+        try {
+            qtyBeforeOrder = Double.parseDouble(positionService.getAnOpenPosition(symbol).getQuantity());
+        } catch (NullPointerException e) {
+            qtyBeforeOrder = 0;
+        }
+        // Réaliser l'ordre
         RequestBody body = RequestBody.create(jsonBody.toString(), MediaType.parse("application/json; charset=utf-8"));
         Response response = httpRequestService.post(endpoint, body);
-        JsonNode jsonNode = objectMapper.readTree(response.body().string());
+        String responseString = response.body().string();
+        logger.info("Response after ordering: {}", responseString);
+        JsonNode jsonNode = objectMapper.readTree(responseString);
         OrderModel createdOrder = objectMapper.treeToValue(jsonNode, OrderModel.class);
-        try {
-            createdOrder.setPositionQtyBeforeOrder(Double.parseDouble(positionService.getAnOpenPosition(symbol).getQuantity()));
-        } catch (NullPointerException e) {
-            createdOrder.setPositionQtyBeforeOrder(0);
-        }
-
+        createdOrder.setPositionQtyBeforeOrder(qtyBeforeOrder);
         return createdOrder;
     }
 
-    public OrderModel getOrderById(String orderId) throws IOException {
-        Response response = httpRequestService.get(endpoint + "/" + orderId);
-        JsonNode jsonNode = objectMapper.readTree(response.body().string());
-        return objectMapper.treeToValue(jsonNode, OrderModel.class);
+    public void cancelAllOrders() throws IOException {
+        httpRequestService.delete(endpoint);
     }
 
     public void archive(OrderModel order) {
         orderRepository.save(order);
     }
 
-    public void replaceWithFilledVersion(OrderModel buyOrder, OrderModel sellOrder) {
-        orderRepository.deleteById(buyOrder.getId());   // On récupère l'ancien ordre d'achat
-        buyOrder.setDualOrderId(sellOrder.getId());     // On lui affecte l'ordre de vente comme ordre dual
-        sellOrder.setDualOrderId(buyOrder.getId());     // Et inversement
-        orderRepository.save(buyOrder);                 // On sauvegarde la version FILLED de l'ordre d'achat
-        orderRepository.save(sellOrder);                // On sauvegarde la version UNFILLED de l'ordre de vente
-    }
-
-    public void replaceSellOrderWithFilledVersion(OrderModel filledSellOrder) {
-        OrderModel unfilledSellOrder = orderRepository.findById(filledSellOrder.getId()).orElse(null);
-        orderRepository.deleteById(filledSellOrder.getId());
-        try {
-            filledSellOrder.setDualOrderId(unfilledSellOrder.getDualOrderId());
-        } catch (NullPointerException e) {
-            // TODO
-        }
-
-        orderRepository.save(filledSellOrder);
-    }
-
     public List<OrderModel> getUnsoldOrders(String assetId) {
         return orderRepository.findUnsoldOrders(assetId);
     }
 
-    public void fillOrder(String message) {
+    public void processFilledOrderFromWebSocketMessage(String message) {
         if (message.contains("\"side\":\"buy\"")) {
             fillBuyOrder(message);
         } else if (message.contains("\"side\":\"sell\"")) {
@@ -143,7 +127,7 @@ public class OrderService {
         }
     }
 
-    private void fillBuyOrder(String message) {
+    public void fillBuyOrder(String message) {
         try {
             JsonNode jsonNode = objectMapper.readTree(message).path("data").path("order");
             OrderModel buyOrder = objectMapper.treeToValue(jsonNode, OrderModel.class);
@@ -153,9 +137,10 @@ public class OrderService {
         }
     }
 
-    private void fillBuyOrder(OrderModel buyOrder) {
+    public void fillBuyOrder(OrderModel buyOrder) {
         try {
-            double positionQtyAfterOrder = Double.parseDouble(positionService.getAnOpenPosition(buyOrder.getSymbol()).getQuantity());
+            PositionModel assetCurrentPosition = positionService.getAnOpenPosition(buyOrder.getSymbol());
+            double positionQtyAfterOrder = Double.parseDouble(assetCurrentPosition.getQuantity());
             double quantityToSell = positionQtyAfterOrder - buyOrder.getPositionQtyBeforeOrder();
             OrderModel sellOrder = createLimitQuantityOrder(
                     buyOrder.getSymbol(),
@@ -163,20 +148,35 @@ public class OrderService {
                     OrderSide.SELL,
                     TimeInForce.GTC,
                     String.valueOf(buyOrder.getFilledAvgPrice() * (1 + (gainPercentage / 100 ))));
-            replaceWithFilledVersion(buyOrder, sellOrder);
+            orderRepository.deleteById(buyOrder.getId());   // On supprime l'ancienne version de l'ordre d'achat
+            buyOrder.setDualOrderId(sellOrder.getId());     // On lui affecte l'ordre de vente comme ordre dual
+            sellOrder.setDualOrderId(buyOrder.getId());     // Et inversement
+            archive(buyOrder);                 // On sauvegarde la version FILLED de l'ordre d'achat
+            archive(sellOrder);                // On sauvegarde la version UNFILLED de l'ordre de vente
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void fillSellOrder(String message) {
+    public void fillSellOrder(String message) {
         try {
             JsonNode jsonNode = objectMapper.readTree(message).path("data").path("order");
             OrderModel sellOrder = objectMapper.treeToValue(jsonNode, OrderModel.class);
-            replaceSellOrderWithFilledVersion(sellOrder);
+            fillSellOrder(sellOrder);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void fillSellOrder(OrderModel filledSellOrder) {
+        OrderModel unfilledSellOrder = orderRepository.findById(filledSellOrder.getId()).orElse(null);
+        orderRepository.deleteById(filledSellOrder.getId());
+        try {
+            filledSellOrder.setDualOrderId(unfilledSellOrder.getDualOrderId());
+        } catch (NullPointerException e) {
+            // TODO
+        }
+        archive(filledSellOrder);
     }
 
     public void updateUnfilledOrders() {
@@ -197,12 +197,18 @@ public class OrderService {
                     fillBuyOrder(newOrder);
                 // Si c'est un ordre de vente qui a été filled, on se contente d'actualiser la version en BD
                 } else if (newOrder.getSide().equals("sell") && newOrder.getFilledAt() != null) {
-                    replaceSellOrderWithFilledVersion(newOrder);
+                    fillSellOrder(newOrder);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
         logger.info("Update done!");
+    }
+
+    public OrderModel getOrderById(String orderId) throws IOException {
+        Response response = httpRequestService.get(endpoint + "/" + orderId);
+        JsonNode jsonNode = objectMapper.readTree(response.body().string());
+        return objectMapper.treeToValue(jsonNode, OrderModel.class);
     }
 }
