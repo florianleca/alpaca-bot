@@ -6,12 +6,9 @@ Using the Alpaca trading API to create a bot automatically placing stock and cry
 [![Maven CI](https://github.com/florianleca/alpaca-bot/actions/workflows/build.yml/badge.svg)](https://github.com/florianleca/alpaca-bot/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=florianleca_alpaca-bot&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=florianleca_alpaca-bot)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=florianleca_alpaca-bot&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=florianleca_alpaca-bot)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=florianleca_alpaca-bot&metric=bugs)](https://sonarcloud.io/summary/new_code?id=florianleca_alpaca-bot)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=florianleca_alpaca-bot&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=florianleca_alpaca-bot)
-[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=florianleca_alpaca-bot&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=florianleca_alpaca-bot)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=florianleca_alpaca-bot&metric=coverage)](https://sonarcloud.io/summary/new_code?id=florianleca_alpaca-bot)
-[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=florianleca_alpaca-bot&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=florianleca_alpaca-bot)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=florianleca_alpaca-bot&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=florianleca_alpaca-bot)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=florianleca_alpaca-bot&metric=coverage)](https://sonarcloud.io/summary/new_code?id=florianleca_alpaca-bot)
+
 ## Author
 
 [@florianleca](https://github.com/florianleca)
