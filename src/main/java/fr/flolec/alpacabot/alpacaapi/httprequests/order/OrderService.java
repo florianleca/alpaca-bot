@@ -211,4 +211,10 @@ public class OrderService {
         JsonNode jsonNode = objectMapper.readTree(response.body().string());
         return objectMapper.treeToValue(jsonNode, OrderModel.class);
     }
+
+    public boolean existsUnfilledBuyOrder(String assetId) {
+        long count = orderRepository.countUnfilledBuyOrder(assetId);
+        System.out.println(count);
+        return count > 0;
+    }
 }

@@ -18,4 +18,7 @@ public interface OrderRepository extends MongoRepository<OrderModel, String> {
 
     @Query(value = "{ 'dual_order_id' : ?0 }")
     Optional<OrderModel> findByDualOrderId(String orderId);
+
+    @Query(value = "{ 'asset_id' : ?0, 'side' : 'buy', 'filled_at' : null }", count = true)
+    long countUnfilledBuyOrder(String assetId);
 }

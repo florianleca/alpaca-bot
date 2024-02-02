@@ -64,11 +64,17 @@ public class Strategy1 {
 
     private final Logger logger = LoggerFactory.getLogger(Strategy1.class);
 
-    //@Scheduled(cron = "0 */1 * * * *")
+    @Scheduled(cron = "0 */1 * * * *")
     public void checkBuyOpportunities() throws IOException {
         logger.info("[STRATEGY 1] [BUY OPPORTUNITIES]");
+        // On commence par prendre la liste de tous les assets existants
         List<AssetModel> assets = assetService.getAssetsList();
+        // On retire les assets dont le prix ne représente pas une opportunité
         assets = removeAssetsUnderThreshold(assets);
+        // On retire les assets ayant un ordre d'achat unfilled
+        assets = removeUnfilledBuyOrders(assets);
+        // On retire les assets ayant un ordre d'achat filled mais pas encore revendu
+        // (pas de dual sellOrder) dont le prix est trop proche du cours actuel
         assets = removeAssetsAlreadyBought(assets);
         assets.forEach(asset -> {
             try {
@@ -139,6 +145,18 @@ public class Strategy1 {
                     + "] [Latest value: " + asset.getLatestValue() + "]");
         });
         logger.info("Number of opportunities: " + filteredAssets.size() + "/" + assets.size());
+        return filteredAssets;
+    }
+
+    private List<AssetModel> removeUnfilledBuyOrders(List<AssetModel> assets) {
+        List<AssetModel> filteredAssets = new ArrayList<>();
+        assets.forEach(asset -> {
+            if (!orderService.existsUnfilledBuyOrder(asset.getId())) {
+                filteredAssets.add(asset);
+            } else {
+                logger.warn("Asset {} was not bought because an unfilled buy order already is in database.", asset.getSymbol());
+            }
+        });
         return filteredAssets;
     }
 
