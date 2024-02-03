@@ -10,15 +10,15 @@ import java.util.Optional;
 @Repository
 public interface OrderRepository extends MongoRepository<OrderModel, String> {
 
-    @Query(value = "{ 'asset_id' : ?0, 'side' : 'buy', dual_order_id : null }")
-    List<OrderModel> findUnsoldOrders(String assetId);
-
     @Query(value = "{ 'filled_at' :  null }")
     List<OrderModel> findUnfilledOrders();
 
     @Query(value = "{ 'dual_order_id' : ?0 }")
     Optional<OrderModel> findByDualOrderId(String orderId);
 
-    @Query(value = "{ 'asset_id' : ?0, 'side' : 'buy', 'filled_at' : null }", count = true)
+    @Query(value = "{ 'symbol' : ?0, 'side' : 'buy', 'filled_at' : null }", count = true)
     long countUnfilledBuyOrder(String assetId);
+
+    @Query(value = "{ 'symbol' : ?0, 'side' : 'buy', 'filled_at' : { $ne: null } }")
+    Optional<OrderModel> findFilledBuyOrders(String symbol);
 }

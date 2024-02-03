@@ -129,7 +129,8 @@ public class Strategy1 {
         List<AssetModel> filteredAssets = new ArrayList<>();
         assets.forEach(asset -> {
             logger.info("Is " + asset.getName().split(" /")[0].trim() + "already brought too close?");
-            List<OrderModel> unsoldOrders = orderService.getUnsoldOrders(asset.getId());
+            // UnsoldBuyOrder = ordre d'achat dont l'ordre de vente dual a une date filled_at null
+            List<OrderModel> unsoldOrders = orderService.getUnsoldBuyOrders(asset.getSymbol());
             int nbOfUnsoldOrdersOfAsset = unsoldOrders.size();
             double minValueInPortfolio = unsoldOrders.stream().mapToDouble(OrderModel::getLimitPrice).min().orElse(Double.MAX_VALUE);
             String state;
@@ -137,21 +138,22 @@ public class Strategy1 {
                 state = "\uD83D\uDFE2";
                 filteredAssets.add(asset);
             } else state = "\uD83D\uDD34";
-            logger.info("[" + state + "] " + asset.getName().split(" /")[0].trim()
-                    + " ("
-                    + asset.getSymbol()
-                    + "): [Unsold orders in DB: " + nbOfUnsoldOrdersOfAsset
-                    + "] [Min limit_price of them: " + minValueInPortfolio
-                    + "] [Latest value: " + asset.getLatestValue() + "]");
+            logger.info("[{}] {} ({}): [Unsold orders in DB: {}] [Min limit_price of them: {}] [Latest value: {}]",
+                    state,
+                    asset.getName().split(" /")[0].trim(),
+                    asset.getSymbol(),
+                    nbOfUnsoldOrdersOfAsset,
+                    minValueInPortfolio,
+                    asset.getLatestValue());
         });
-        logger.info("Number of opportunities: " + filteredAssets.size() + "/" + assets.size());
+        logger.info("Number of opportunities: {}/{}", filteredAssets.size(), assets.size());
         return filteredAssets;
     }
 
     private List<AssetModel> removeUnfilledBuyOrders(List<AssetModel> assets) {
         List<AssetModel> filteredAssets = new ArrayList<>();
         assets.forEach(asset -> {
-            if (!orderService.existsUnfilledBuyOrder(asset.getId())) {
+            if (orderService.countUnfilledBuyOrder(asset.getSymbol()) == 0) {
                 filteredAssets.add(asset);
             } else {
                 logger.warn("Asset {} was not bought because an unfilled buy order already is in database.", asset.getSymbol());

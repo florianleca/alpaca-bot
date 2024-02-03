@@ -148,6 +148,7 @@ public class OrderServiceTest {
         // Précaution pour éviter possibles problèmes
         orderService.cancelAllOrders();
         long bdSize = orderRepository.count();
+        assertEquals(0, orderService.countUnfilledBuyOrder("BTC/USD"));
         // Passer un ordre et l'archiver en BD
         OrderModel createdBuyOrder = orderService.createMarketNotionalOrder(
                 "BTC/USD",
@@ -156,6 +157,7 @@ public class OrderServiceTest {
                 TimeInForce.GTC);
         Thread.sleep(250);
         orderService.archive(createdBuyOrder);
+        assertEquals(1, orderService.countUnfilledBuyOrder("BTC/USD"));
         // Cet ordre doit être en BD avec filled_at = null
         assertEquals(bdSize + 1, orderRepository.count());
         OrderModel unfilledBuyOrder = orderRepository.findById(createdBuyOrder.getId()).orElse(null);
@@ -184,6 +186,7 @@ public class OrderServiceTest {
         assertNotNull(filledBuyOrder);
         assertEquals(createdBuyOrder.getId(), filledBuyOrder.getId());
         assertEquals(Date.from(Instant.parse("2024-01-28T13:35:00.985937652Z")), filledBuyOrder.getFilledAt());
+        assertEquals(0, orderService.countUnfilledBuyOrder("BTC/USD"));
         // Son ordre dual est également en BD
         OrderModel dualSellOrder = orderRepository.findByDualOrderId(createdBuyOrder.getId()).orElse(null);
         assertNotNull(dualSellOrder);
