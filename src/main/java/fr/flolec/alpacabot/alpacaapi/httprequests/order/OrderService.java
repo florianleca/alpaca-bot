@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -115,10 +116,6 @@ public class OrderService {
         orderRepository.save(order);
     }
 
-    public List<OrderModel> getUnsoldOrders(String assetId) {
-        return orderRepository.findUnsoldOrders(assetId);
-    }
-
     public void processFilledOrderFromWebSocketMessage(String message) {
         if (message.contains("\"side\":\"buy\"")) {
             fillBuyOrder(message);
@@ -210,5 +207,29 @@ public class OrderService {
         Response response = httpRequestService.get(endpoint + "/" + orderId);
         JsonNode jsonNode = objectMapper.readTree(response.body().string());
         return objectMapper.treeToValue(jsonNode, OrderModel.class);
+    }
+
+    public long countUnfilledBuyOrder(String symbol) {
+        return orderRepository.countUnfilledBuyOrder(symbol);
+    }
+
+    /**
+     *
+     * @param symbol The symbol of the asset
+     * @return The list of unsold buy orders of this asset, meaning filled buy orders with unfilled dual sell orders
+     */
+    public List<OrderModel> getUnsoldBuyOrders(String symbol) {
+        List<OrderModel> unsoldBuyOrders = new ArrayList<>();
+        // On récupère tous les ordres d'achat filled
+        List<OrderModel> allFilledBuyOrders = orderRepository.findFilledBuyOrders(symbol).stream().toList();
+        // Pour chaque ordre, si son dual est unfilled, on l'ajoute
+        allFilledBuyOrders.forEach(order -> {
+            OrderModel dualSellOrder = orderRepository.findById(order.getDualOrderId()).orElse(null);
+            assert dualSellOrder != null;
+            if (dualSellOrder.getFilledAt() == null) {
+                unsoldBuyOrders.add(order);
+            }
+        });
+        return unsoldBuyOrders;
     }
 }
