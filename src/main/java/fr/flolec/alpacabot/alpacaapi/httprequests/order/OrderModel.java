@@ -72,9 +72,6 @@ public class OrderModel {
     @JsonProperty("status")
     private String status;
 
-    @Field("dual_order_id")
-    private String dualOrderId;
-
     /*
      Unused properties:
           client_order_id

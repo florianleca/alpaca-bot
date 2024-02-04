@@ -82,6 +82,11 @@ public class PositionService {
         return objectMapper.treeToValue(jsonNode, PositionModel.class);
     }
 
+    public double getCurrentQtyOfAsset(String symbol) throws IOException {
+        PositionModel assetCurrentPosition = getAnOpenPosition(symbol);
+        if (assetCurrentPosition.getQuantity() == null) return 0;
+        else return Double.parseDouble(assetCurrentPosition.getQuantity());
+    }
 }
 
 

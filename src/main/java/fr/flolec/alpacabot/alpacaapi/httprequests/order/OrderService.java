@@ -26,20 +26,17 @@ public class OrderService {
     private final ObjectMapper objectMapper;
     private final HttpRequestService httpRequestService;
     private final OrderRepository orderRepository;
-    private final PositionService positionService;
     private final Logger logger = LoggerFactory.getLogger(OrderService.class);
 
     @Autowired
     public OrderService(@Value("${PAPER_ORDERS_ENDPOINT}") String endpoint,
                         ObjectMapper objectMapper,
                         HttpRequestService httpRequestService,
-                        OrderRepository orderRepository,
-                        PositionService positionService) {
+                        OrderRepository orderRepository) {
         this.endpoint = endpoint;
         this.objectMapper = objectMapper;
         this.httpRequestService = httpRequestService;
         this.orderRepository = orderRepository;
-        this.positionService = positionService;
     }
 
     public OrderModel getOrderById(String orderId) throws IOException {
@@ -131,16 +128,6 @@ public class OrderService {
         archive(filledOrder);
     }
 
-//        PositionModel assetCurrentPosition = positionService.getAnOpenPosition(buyOrder.getSymbol());
-//        double positionQtyAfterOrder = Double.parseDouble(assetCurrentPosition.getQuantity());
-//        double quantityToSell = positionQtyAfterOrder - buyOrder.getPositionQtyBeforeOrder();
-//        OrderModel sellOrder = createLimitQuantityOrder(
-//                buyOrder.getSymbol(),
-//                String.valueOf(quantityToSell),
-//                OrderSide.SELL,
-//                TimeInForce.GTC,
-//                String.valueOf(buyOrder.getFilledAvgPrice() * (1 + (gainPercentage / 100 ))));
-
     public void updateUnfilledOrders() {
         logger.info("Updating potential filled orders...");
         List<OrderModel> unfilledOrders = orderRepository.findUnfilledOrders();     // On récupère les ordres qui ne sont pas 'filled' en BD,
@@ -161,20 +148,20 @@ public class OrderService {
         return orderRepository.countUnfilledBuyOrder(symbol);
     }
 
-    /**
-     * @param symbol The symbol of the asset
-     * @return The list of unsold buy orders of this asset, meaning filled buy orders with unfilled dual sell orders
-     */
-    public List<OrderModel> getUnsoldBuyOrders(String symbol) {
-        List<OrderModel> unsoldBuyOrders = new ArrayList<>();
-        List<OrderModel> allFilledBuyOrders = orderRepository.findFilledBuyOrders(symbol).stream().toList();    // On récupère tous les ordres d'achat filled
-        allFilledBuyOrders.forEach(order -> {                                                                   // Pour chacun d'entre eux...
-            OrderModel dualSellOrder = orderRepository.findById(order.getDualOrderId()).orElse(null);
-            assert dualSellOrder != null;
-            if (dualSellOrder.getFilledAt() == null) {                                                          // Si son dual est unfilled,
-                unsoldBuyOrders.add(order);                                                                     // on l'ajoute.
-            }
-        });
-        return unsoldBuyOrders;
-    }
+//    /**
+//     * @param symbol The symbol of the asset
+//     * @return The list of unsold buy orders of this asset, meaning filled buy orders with unfilled dual sell orders
+//     */
+//    public List<OrderModel> getUnsoldBuyOrders(String symbol) {
+//        List<OrderModel> unsoldBuyOrders = new ArrayList<>();
+//        List<OrderModel> allFilledBuyOrders = orderRepository.findFilledBuyOrders(symbol).stream().toList();    // On récupère tous les ordres d'achat filled
+//        allFilledBuyOrders.forEach(order -> {                                                                   // Pour chacun d'entre eux...
+//            OrderModel dualSellOrder = orderRepository.findById(order.getDualOrderId()).orElse(null);
+//            assert dualSellOrder != null;
+//            if (dualSellOrder.getFilledAt() == null) {                                                          // Si son dual est unfilled,
+//                unsoldBuyOrders.add(order);                                                                     // on l'ajoute.
+//            }
+//        });
+//        return unsoldBuyOrders;
+//    }
 }
