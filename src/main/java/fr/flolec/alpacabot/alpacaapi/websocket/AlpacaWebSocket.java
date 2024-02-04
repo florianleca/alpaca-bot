@@ -2,6 +2,7 @@ package fr.flolec.alpacabot.alpacaapi.websocket;
 
 
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.WebSocket;
@@ -10,13 +11,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
+@Getter
 public class AlpacaWebSocket {
-
-    private WebSocket webSocket;
 
     private final OkHttpClient okHttpClient;
     private final AlpacaWebSocketListener alpacaWebSocketListener;
     private final String webSocketUri;
+    private WebSocket webSocket;
 
     @Autowired
     public AlpacaWebSocket(@Value("${WEBSOCKET_URI}") String webSocketUri,
@@ -39,4 +40,3 @@ public class AlpacaWebSocket {
         webSocket.close(1000, "Closed web socket");
     }
 }
-
