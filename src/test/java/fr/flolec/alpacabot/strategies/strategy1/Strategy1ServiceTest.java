@@ -9,10 +9,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.io.IOException;
 
 @SpringBootTest(classes = AlpacaBotApplication.class)
-public class Strategy1Test {
+public class Strategy1ServiceTest {
 
     @Autowired
-    private Strategy1 strategy1;
+    private Strategy1Service strategy1;
 
     @Test
     @DisplayName("Launching Strategy 1 opportunity checker")

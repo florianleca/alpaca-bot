@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class Strategy1 {
+public class Strategy1Service {
 
     @Autowired
     private OrderService orderService;
@@ -62,7 +62,11 @@ public class Strategy1 {
     @Value("${PREVIOUSLY_BOUGHT_PERCENTAGE}")
     private double previouslyBoughtPercentage;
 
-    private final Logger logger = LoggerFactory.getLogger(Strategy1.class);
+    @Value("${GAIN_PERCENTAGE}")
+    private double gainPercentage;
+
+
+    private final Logger logger = LoggerFactory.getLogger(Strategy1Service.class);
 
     @Scheduled(cron = "0 */1 * * * *")
     public void checkBuyOpportunities() throws IOException {

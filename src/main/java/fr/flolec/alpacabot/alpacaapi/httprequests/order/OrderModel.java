@@ -75,8 +75,6 @@ public class OrderModel {
     @Field("dual_order_id")
     private String dualOrderId;
 
-    private double positionQtyBeforeOrder;
-
     /*
      Unused properties:
           client_order_id
