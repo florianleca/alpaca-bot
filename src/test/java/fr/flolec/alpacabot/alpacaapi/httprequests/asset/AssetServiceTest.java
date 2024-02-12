@@ -14,7 +14,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = AlpacaBotApplication.class)
-public class AssetServiceTest {
+class AssetServiceTest {
 
     private final Logger logger = LoggerFactory.getLogger(AssetServiceTest.class);
 

@@ -111,7 +111,7 @@ public class Strategy1ServiceTest {
 
     @Test
     @DisplayName("Asset decreasing percent below and above threshold")
-    void decreasedMoreThanThreshold() throws IOException {
+    void decreasedMoreThanThreshold() {
         AssetModel asset = new AssetModel();
         asset.setSymbol("TEST/TEST");
         asset.setName("Testing");

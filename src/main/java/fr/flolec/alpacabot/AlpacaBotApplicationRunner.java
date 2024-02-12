@@ -1,6 +1,5 @@
 package fr.flolec.alpacabot;
 
-import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
 import fr.flolec.alpacabot.strategies.strategy1.Strategy1Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;

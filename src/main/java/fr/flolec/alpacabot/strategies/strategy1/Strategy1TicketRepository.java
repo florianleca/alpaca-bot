@@ -1,6 +1,5 @@
 package fr.flolec.alpacabot.strategies.strategy1;
 
-import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;

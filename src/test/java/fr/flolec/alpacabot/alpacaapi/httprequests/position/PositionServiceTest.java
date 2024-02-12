@@ -83,7 +83,7 @@ public class PositionServiceTest {
 
     @Test
     @DisplayName("Liquidate percentage of position")
-    void liquidatePositionByPercentage() throws IOException, InterruptedException {
+    void liquidatePositionByPercentage() throws InterruptedException {
         // Acheter du BTC et attendre que l'ordre soit filled
         orderService.createMarketNotionalOrder("MKR/USD", "1", OrderSide.BUY, TimeInForce.GTC);
         Thread.sleep(250);
@@ -101,7 +101,7 @@ public class PositionServiceTest {
 
     @Test
     @DisplayName("Liquidate quantity of position")
-    void liquidatePositionByQuantity() throws IOException, InterruptedException {
+    void liquidatePositionByQuantity() throws InterruptedException {
         // Acheter du BTC et attendre que l'ordre soit filled
         orderService.createMarketNotionalOrder("ETH/USD", "1", OrderSide.BUY, TimeInForce.GTC);
         Thread.sleep(250);

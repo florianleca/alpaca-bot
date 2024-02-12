@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = AlpacaBotApplication.class)
-public class BarServiceTest {
+class BarServiceTest {
 
     private final Logger logger = LoggerFactory.getLogger(BarServiceTest.class);
 
