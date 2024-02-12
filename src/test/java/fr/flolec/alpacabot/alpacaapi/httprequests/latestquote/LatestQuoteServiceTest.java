@@ -15,7 +15,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = AlpacaBotApplication.class)
-public class LatestQuoteServiceTest {
+class LatestQuoteServiceTest {
 
     private final Logger logger = LoggerFactory.getLogger(LatestQuoteServiceTest.class);
 

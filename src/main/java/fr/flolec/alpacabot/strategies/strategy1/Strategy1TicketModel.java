@@ -31,7 +31,8 @@ public class Strategy1TicketModel {
     @Field("position_qty_after_buying")
     private double positionQtyAfterBuyOrder;
 
-    public Strategy1TicketModel() {};
+    public Strategy1TicketModel() {
+    }
 
 
     public Strategy1TicketModel(OrderModel buyOrder, double positionQtyBeforeBuyOrder) throws IllegalArgumentException {
@@ -42,12 +43,6 @@ public class Strategy1TicketModel {
         this.buyOrderId = buyOrder.getId();
         this.positionQtyBeforeBuyOrder = positionQtyBeforeBuyOrder;
         this.status = Strategy1TicketStatus.BUY_UNFILLED;
-
-//        switch (buyOrder.getStatus()) {
-//            case "pending-new" -> this.status = Strategy1TicketStatus.BUY_UNFILLED;
-//            case "filled" -> this.status = Strategy1TicketStatus.BUY_FILLED_SELL_UNFILLED;
-//            default -> throw new IllegalArgumentException("Illegal buy order status when creating ticket: " + buyOrder.getStatus());
-//        }
     }
 
     @Override

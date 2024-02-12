@@ -26,18 +26,13 @@ import java.util.List;
 public class Strategy1Service {
 
     private final Logger logger = LoggerFactory.getLogger(Strategy1Service.class);
-    @Autowired
-    private OrderService orderService;
-    @Autowired
-    private AssetService assetService;
-    @Autowired
-    private BarService barService;
-    @Autowired
-    private LatestQuoteService latestQuoteService;
-    @Autowired
-    private Strategy1TicketRepository strategy1TicketRepository;
-    @Autowired
-    private PositionService positionService;
+    private final OrderService orderService;
+    private final AssetService assetService;
+    private final BarService barService;
+    private final LatestQuoteService latestQuoteService;
+    private final Strategy1TicketRepository strategy1TicketRepository;
+    private final PositionService positionService;
+
     @Value("${NOTIONAL}")
     private double notional;
     @Value("${THRESHOLD}")
@@ -48,16 +43,27 @@ public class Strategy1Service {
     private int periodLength;
     @Value("${PERIOD_LENGTH_UNIT}")
     private String periodLengthUnitLabel;
-    @Value("${WEEKS_BACK_FOR_GLOBAL_MAX}")
-    private int weeksBackForGlobalMax;
-    @Value("${GLOBAL_MAX_PERCENTAGE}")
-    private double globalMaxPercentage;
     @Value("${PREVIOUSLY_BOUGHT_PERCENTAGE}")
     private double previouslyBoughtPercentage;
     @Value("${GAIN_PERCENTAGE}")
     private double gainPercentage;
 
-//    @Scheduled(cron = "0 */1 * * * *")
+    @Autowired
+    public Strategy1Service(OrderService orderService,
+                            AssetService assetService,
+                            BarService barService,
+                            LatestQuoteService latestQuoteService,
+                            Strategy1TicketRepository strategy1TicketRepository,
+                            PositionService positionService) {
+        this.orderService = orderService;
+        this.assetService = assetService;
+        this.barService = barService;
+        this.latestQuoteService = latestQuoteService;
+        this.strategy1TicketRepository = strategy1TicketRepository;
+        this.positionService = positionService;
+    }
+
+    @Scheduled(cron = "${STRATEGY_1_CRON}")
     public void checkBuyOpportunities() throws IOException {
         logger.info("[STRATEGY 1] [BUY OPPORTUNITIES]");
         List<AssetModel> assets = assetService.getAssetsList(); // On commence par prendre la liste de tous les assets existants
@@ -67,22 +73,18 @@ public class Strategy1Service {
     }
 
     private void orderAssetAndCreateTicket(AssetModel asset) {
-        try {
-            double positionQtyBeforeBuyOrder = positionService.getCurrentQtyOfAsset(asset.getSymbol());
-            logger.info("Trying to buy some {}...", asset.getSymbol());
-            OrderModel buyOrder = orderService.createLimitNotionalOrder(
-                    asset.getSymbol(),
-                    String.valueOf(notional),
-                    OrderSide.BUY,
-                    TimeInForce.IOC,
-                    String.valueOf(asset.getLatestValue()));
-            createTicket(buyOrder, positionQtyBeforeBuyOrder);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        double positionQtyBeforeBuyOrder = positionService.getCurrentQtyOfAsset(asset.getSymbol());
+        logger.info("Trying to buy some {}...", asset.getSymbol());
+        OrderModel buyOrder = orderService.createLimitNotionalOrder(
+                asset.getSymbol(),
+                String.valueOf(notional),
+                OrderSide.BUY,
+                TimeInForce.IOC,
+                String.valueOf(asset.getLatestValue()));
+        createTicket(buyOrder, positionQtyBeforeBuyOrder);
     }
 
-    public void createTicket(OrderModel buyOrder, double positionQtyBeforeBuyOrder) throws IOException {
+    public void createTicket(OrderModel buyOrder, double positionQtyBeforeBuyOrder) {
         Strategy1TicketModel strategy1TicketModel = new Strategy1TicketModel(buyOrder, positionQtyBeforeBuyOrder);
         strategy1TicketRepository.save(strategy1TicketModel);
         logger.info("Created and archived new ticket: {}", strategy1TicketModel);
@@ -130,8 +132,7 @@ public class Strategy1Service {
         OrderModel potentiallyFilledSellOrder = orderService.getOrderById(ticket.getSellOrderId());
         if (potentiallyFilledSellOrder.getStatus() == null) {
             logger.error("Sell order of id {} has null status", ticket.getSellOrderId());
-        }
-        else if (potentiallyFilledSellOrder.getStatus().equals("filled")) {
+        } else if (potentiallyFilledSellOrder.getStatus().equals("filled")) {
             ticket.setStatus(Strategy1TicketStatus.COMPLETE);
             strategy1TicketRepository.save(ticket);
             logger.info("This {} ticket is now completed!", ticket.getSymbol());
@@ -143,23 +144,23 @@ public class Strategy1Service {
     private List<AssetModel> removeAssetsUnderThreshold(List<AssetModel> assets) {
         List<AssetModel> filteredAssets = new ArrayList<>();
         assets.forEach(asset -> {
-            logger.info("Is " + asset.getName().split(" /")[0].trim() + "'s price interesting?");
+            logger.info("Is {}'s price interesting?", asset.getName().split(" /")[0].trim());
             try {
                 asset.setLatestValue(latestQuoteService.getLatestQuote(asset));
                 double maxHigh = barService.getMaxHighOnPeriod(asset, barTimeFrameLabel, periodLength, periodLengthUnitLabel);
                 maxHigh = Math.max(maxHigh, asset.getLatestValue());
-                if (decreasedMoreThanThreshold(asset, maxHigh) && maxHighIsOrdinary(asset, maxHigh)) {
+                if (decreasedMoreThanThreshold(asset, maxHigh)) {
                     filteredAssets.add(asset);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
-        logger.info("Number of opportunities: " + filteredAssets.size() + "/" + assets.size());
+        logger.info("Number of opportunities: {}/{}", filteredAssets.size(), assets.size());
         return filteredAssets;
     }
 
-    public boolean decreasedMoreThanThreshold(AssetModel asset, double maxHigh) throws IOException {
+    public boolean decreasedMoreThanThreshold(AssetModel asset, double maxHigh) {
         if (asset.getLatestValue() > maxHigh) {
             throw new RuntimeException("Asset latest value should be above its maxHigh");
         }
@@ -168,20 +169,10 @@ public class Strategy1Service {
         return decreasePercent >= threshold;
     }
 
-    private boolean maxHighIsOrdinary(AssetModel asset, double maxHigh) throws IOException {
-//        double moreGlobalMax = barService.getMaxHighOnPeriod(asset, BarTimeFrame.DAY1, weeksBackForGlobalMax, PeriodLengthUnit.WEEK);
-//        boolean maxHighIsOrdinary = maxHigh < (1 - (globalMaxPercentage / 100)) * moreGlobalMax;
-//        if (maxHighIsOrdinary) logger.info("[\uD83D\uDFE2 Past week max value: $" + moreGlobalMax);
-//        else logger.info("[\uD83D\uDD34\uD83D\uDD34 Past week max value: $" + moreGlobalMax);
-//        return maxHighIsOrdinary;
-        return true;
-    }
-
-
     private List<AssetModel> removeAssetsAlreadyBought(List<AssetModel> assets) {
         List<AssetModel> filteredAssets = new ArrayList<>();
         assets.forEach(asset -> {
-            logger.info("Is " + asset.getName().split(" /")[0].trim() + "already brought too close?");
+            logger.info("Is {} already brought too close?", asset.getName().split(" /")[0].trim());
             // UnsoldBuyOrder = ordre d'achat dont l'ordre de vente dual a une date filled_at null
             List<Strategy1TicketModel> uncompletedTickets = strategy1TicketRepository.findUncompletedTickets(asset.getSymbol());
             int nbOfUnsoldOrdersOfAsset = uncompletedTickets.size();
