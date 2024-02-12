@@ -89,7 +89,6 @@ public class PositionServiceTest {
         Thread.sleep(250);
         // Récupérer la nouvelle quantité de la position
         PositionModel positionModel = positionService.getAnOpenPosition("MKR/USD");
-        System.out.println(positionModel);
         double afterBuyQty = Double.parseDouble(positionModel.getQuantity());
         // Liquider la moitié de la position
         positionService.liquidatePositionByPercentage("MKR/USD", 50);

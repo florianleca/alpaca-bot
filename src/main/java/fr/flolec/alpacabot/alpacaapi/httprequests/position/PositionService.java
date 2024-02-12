@@ -1,6 +1,8 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests.position;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.flolec.alpacabot.alpacaapi.httprequests.HttpRequestService;
@@ -75,13 +77,23 @@ public class PositionService {
     }
 
 
-    public PositionModel getAnOpenPosition(String symbol) throws IOException {
+    public PositionModel getAnOpenPosition(String symbol) {
         symbol = takeSlashOutOfSymbol(symbol);
-        Response response = httpRequestService.get(endpoint + "/" + symbol);
-        JsonNode jsonNode = objectMapper.readTree(response.body().string());
-        return objectMapper.treeToValue(jsonNode, PositionModel.class);
+        try {
+            Response response = httpRequestService.get(endpoint + "/" + symbol);
+            JsonNode jsonNode = objectMapper.readTree(response.body().string());
+            return objectMapper.treeToValue(jsonNode, PositionModel.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
+    public double getCurrentQtyOfAsset(String symbol) {
+        PositionModel assetCurrentPosition = getAnOpenPosition(symbol);
+        if (assetCurrentPosition.getQuantity() == null) return 0;
+        else return Double.parseDouble(assetCurrentPosition.getQuantity());
+    }
 }
 
 

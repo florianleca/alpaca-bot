@@ -6,7 +6,8 @@ import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarServiceTest;
 import fr.flolec.alpacabot.alpacaapi.httprequests.latestquote.LatestQuoteServiceTest;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderServiceTest;
 import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionServiceTest;
-import fr.flolec.alpacabot.strategies.strategy1.Strategy1Test;
+import fr.flolec.alpacabot.alpacaapi.websocket.AlpacaWebSocketListenerTest;
+import fr.flolec.alpacabot.strategies.strategy1.Strategy1ServiceTest;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
@@ -19,7 +20,8 @@ import org.junit.platform.suite.api.Suite;
         LatestQuoteServiceTest.class,
         OrderServiceTest.class,
         PositionServiceTest.class,
-        Strategy1Test.class
+        Strategy1ServiceTest.class,
+        AlpacaWebSocketListenerTest.class
         })
 public class TestSuite {
 }
