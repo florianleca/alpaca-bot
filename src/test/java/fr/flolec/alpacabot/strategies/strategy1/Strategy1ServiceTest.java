@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -40,6 +42,9 @@ public class Strategy1ServiceTest {
 
     @Value("${THRESHOLD}")
     private double threshold;
+
+    @Value("${PREVIOUSLY_BOUGHT_PERCENTAGE}")
+    private double previouslyBoughtPercentage;
 
     @BeforeEach
     void closeSocket() {
@@ -123,6 +128,21 @@ public class Strategy1ServiceTest {
         assertTrue(strategy1Service.decreasedMoreThanThreshold(asset, maxHighThreshold));
         assertTrue(strategy1Service.decreasedMoreThanThreshold(asset, maxHighMoreThanThreshold));
         assertThrows(RuntimeException.class, () -> strategy1Service.decreasedMoreThanThreshold(asset, 99));
+    }
+
+    @Test
+    @DisplayName("Minimum buyPrice value of list of tickets is returned")
+    void minBuyPriceFromTicketList() {
+        Strategy1TicketModel ticket1 = new Strategy1TicketModel();
+        ticket1.setAverageFilledBuyPrice(100);
+        Strategy1TicketModel ticket2 = new Strategy1TicketModel();
+        ticket2.setAverageFilledBuyPrice(200);
+        List<Strategy1TicketModel> tickets = new ArrayList<>();
+        assertEquals(-1, strategy1Service.minBuyPriceFromTicketList(tickets));
+        tickets.add(ticket2);
+        assertEquals(200, strategy1Service.minBuyPriceFromTicketList(tickets));
+        tickets.add(ticket1);
+        assertEquals(100, strategy1Service.minBuyPriceFromTicketList(tickets));
     }
 
 }

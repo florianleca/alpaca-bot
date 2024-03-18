@@ -31,6 +31,9 @@ public class Strategy1TicketModel {
     @Field("position_qty_after_buying")
     private double positionQtyAfterBuyOrder;
 
+    @Field("average_filled_buy_price")
+    private double averageFilledBuyPrice;
+
     public Strategy1TicketModel() {
     }
 
