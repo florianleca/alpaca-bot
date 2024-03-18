@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Component
@@ -115,6 +116,7 @@ public class Strategy1Service {
                         String.valueOf(buyOrder.getFilledAvgPrice() * (1 + (gainPercentage / 100))));
                 ticket.setSellOrderId(sellOrder.getId());
                 ticket.setStatus(Strategy1TicketStatus.BUY_FILLED_SELL_UNFILLED);
+                ticket.setAverageFilledBuyPrice(buyOrder.getFilledAvgPrice());
                 strategy1TicketRepository.save(ticket);
                 logger.info("Successfully updated {} ticket from 'BUY_UNFILLED' to 'BUY_FILLED_SELL_UNFILLED'", ticket.getSymbol());
             }
@@ -172,28 +174,38 @@ public class Strategy1Service {
     private List<AssetModel> removeAssetsAlreadyBought(List<AssetModel> assets) {
         List<AssetModel> filteredAssets = new ArrayList<>();
         assets.forEach(asset -> {
-            logger.info("Is {} already brought too close?", asset.getName().split(" /")[0].trim());
-            // UnsoldBuyOrder = ordre d'achat dont l'ordre de vente dual a une date filled_at null
-            List<Strategy1TicketModel> uncompletedTickets = strategy1TicketRepository.findUncompletedTickets(asset.getSymbol());
-            int nbOfUnsoldOrdersOfAsset = uncompletedTickets.size();
-            //double minValueInPortfolio = uncompletedTickets.stream().mapToDouble(OrderModel::getLimitPrice).min().orElse(Double.MAX_VALUE);
-            String state;
-            // if (nbOfUnsoldOrdersOfAsset == 0 || asset.getLatestValue() < (1 - (previouslyBoughtPercentage / 100)) * minValueInPortfolio) {
-            if (nbOfUnsoldOrdersOfAsset == 0) {
-                state = "\uD83D\uDFE2";
-                filteredAssets.add(asset);
-            } else state = "\uD83D\uDD34";
-            logger.info("[{}] {} ({}): [Unsold orders in DB: {}] [Min limit_price of them: {}] [Latest value: {}]",
-                    state,
-                    asset.getName().split(" /")[0].trim(),
-                    asset.getSymbol(),
-                    nbOfUnsoldOrdersOfAsset,
-                    "TODO",
-                    // minValueInPortfolio,
-                    asset.getLatestValue());
-        });
+                    logger.info("Do we already have uncompleted {} tickets with similar buying price?", asset.getName().split(" /")[0].trim());
+                    checkAssetUncompletedTickets(asset, filteredAssets);
+                });
         logger.info("Number of opportunities: {}/{}", filteredAssets.size(), assets.size());
         return filteredAssets;
+    }
+
+    private void checkAssetUncompletedTickets(AssetModel asset, List<AssetModel> filteredAssets) {
+        // pour chaque asset, récupérer la liste des uncompleted tickets de cet asset
+        List<Strategy1TicketModel> tickets = strategy1TicketRepository.findUncompletedTickets(asset.getSymbol());
+        // si la liste est vide : is ok
+        if (tickets.isEmpty()) {
+            logger.info("\uD83D\uDFE2 No uncompleted {} tickets in database", asset.getSymbol());
+            filteredAssets.add(asset);
+        } else {
+            // sinon : on calcule la valeur minimale
+            Double minBuyPrice = minBuyPriceFromTicketList(tickets);
+            // si la valeur minimum d'achat est plus grande que (valeur actuelle + delta) :  is ok
+            if (minBuyPrice > (1 + (previouslyBoughtPercentage / 100)) * asset.getLatestValue()) {
+                logger.info("\uD83D\uDFE2 Min value of {} tickets in DB is high enough ({}) compared to current value ({})", asset.getSymbol(), minBuyPrice, asset.getLatestValue());
+                filteredAssets.add(asset);
+            } else {
+                logger.info("\uD83D\uDD34 Min value of {} tickets in DB is NOT high enough ({}) compared to current value ({})", asset.getSymbol(), minBuyPrice, asset.getLatestValue());
+            }
+        }
+    }
+
+    public Double minBuyPriceFromTicketList(List<Strategy1TicketModel> tickets) {
+        return tickets.stream()
+                .map(Strategy1TicketModel::getAverageFilledBuyPrice)
+                .min(Double::compare)
+                .orElse(-1.);
     }
 
     private void logAssetThresholdState(AssetModel asset, double decreasePercent, double maxHigh) {
