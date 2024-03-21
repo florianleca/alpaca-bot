@@ -76,12 +76,11 @@ public class Strategy1Service {
     private void orderAssetAndCreateTicket(AssetModel asset) {
         double positionQtyBeforeBuyOrder = positionService.getCurrentQtyOfAsset(asset.getSymbol());
         logger.info("Trying to buy some {}...", asset.getSymbol());
-        OrderModel buyOrder = orderService.createLimitNotionalOrder(
+        OrderModel buyOrder = orderService.createMarketNotionalOrder(
                 asset.getSymbol(),
                 String.valueOf(notional),
                 OrderSide.BUY,
-                TimeInForce.IOC,
-                String.valueOf(asset.getLatestValue()));
+                TimeInForce.IOC);
         createTicket(buyOrder, positionQtyBeforeBuyOrder);
     }
 
