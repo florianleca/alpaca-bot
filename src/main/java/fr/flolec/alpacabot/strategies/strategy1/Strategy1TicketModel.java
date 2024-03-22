@@ -3,6 +3,7 @@ package fr.flolec.alpacabot.strategies.strategy1;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
 import lombok.Getter;
 import lombok.Setter;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -12,10 +13,13 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Document(collection = "tickets-strategy-1")
 public class Strategy1TicketModel {
 
+    @Id
+    @Field("id")
+    private ObjectId id;
+
     @Field("symbol")
     private String symbol;
 
-    @Id
     @Field("buy_order_id")
     private String buyOrderId;
 
@@ -44,8 +48,8 @@ public class Strategy1TicketModel {
         }
         this.symbol = buyOrder.getSymbol();
         this.buyOrderId = buyOrder.getId();
-        this.positionQtyBeforeBuyOrder = positionQtyBeforeBuyOrder;
         this.status = Strategy1TicketStatus.BUY_UNFILLED;
+        this.positionQtyBeforeBuyOrder = positionQtyBeforeBuyOrder;
     }
 
     @Override

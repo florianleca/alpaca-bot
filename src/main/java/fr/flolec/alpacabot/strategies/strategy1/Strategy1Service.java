@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 @Component
@@ -102,30 +101,26 @@ public class Strategy1Service {
     private void updateTicket1to2(Strategy1TicketModel ticket) {
         logger.info("Trying to update a {} ticket from 'BUY_UNFILLED' to 'BUY_FILLED_SELL_UNFILLED'", ticket.getSymbol());
         OrderModel potentiallyFilledBuyOrder = orderService.getOrderById(ticket.getBuyOrderId());
-        switch (potentiallyFilledBuyOrder.getStatus()) {
-            case "filled" -> {
-                logger.info("[\uD83D\uDCB8] Bought ${} worth of {}!", notional, ticket.getSymbol().split("/")[0]);
-                ticket.setPositionQtyAfterBuyOrder(positionService.getCurrentQtyOfAsset(ticket.getSymbol()));
-                OrderModel buyOrder = orderService.getOrderById(ticket.getBuyOrderId());
-                OrderModel sellOrder = orderService.createLimitQuantityOrder(
-                        ticket.getSymbol(),
-                        String.valueOf(ticket.getPositionQtyAfterBuyOrder() - ticket.getPositionQtyBeforeBuyOrder()),
-                        OrderSide.SELL,
-                        TimeInForce.GTC,
-                        String.valueOf(buyOrder.getFilledAvgPrice() * (1 + (gainPercentage / 100))));
-                ticket.setSellOrderId(sellOrder.getId());
-                ticket.setStatus(Strategy1TicketStatus.BUY_FILLED_SELL_UNFILLED);
-                ticket.setAverageFilledBuyPrice(buyOrder.getFilledAvgPrice());
-                strategy1TicketRepository.save(ticket);
-                logger.info("Successfully updated {} ticket from 'BUY_UNFILLED' to 'BUY_FILLED_SELL_UNFILLED'", ticket.getSymbol());
-            }
-            case "canceled" -> {
-                logger.info("Buy order of {} has been cancelled - Deleting ticket from database", ticket.getSymbol());
-                strategy1TicketRepository.delete(ticket);
-            }
-            default ->
-                    logger.warn("Couldn't update this {} ticket, because the buy order status is '{}'", ticket.getSymbol(), potentiallyFilledBuyOrder.getStatus());
+        if (potentiallyFilledBuyOrder.getStatus().equals("filled")) {
+            logger.info("[\uD83D\uDCB8] Bought ${} worth of {}!", notional, ticket.getSymbol().split("/")[0]);
+            ticket.setPositionQtyAfterBuyOrder(positionService.getCurrentQtyOfAsset(ticket.getSymbol()));
+            OrderModel buyOrder = orderService.getOrderById(ticket.getBuyOrderId());
+            OrderModel sellOrder = orderService.createLimitQuantityOrder(
+                    ticket.getSymbol(),
+                    String.valueOf(ticket.getPositionQtyAfterBuyOrder() - ticket.getPositionQtyBeforeBuyOrder()),
+                    OrderSide.SELL,
+                    TimeInForce.GTC,
+                    String.valueOf(buyOrder.getFilledAvgPrice() * (1 + (gainPercentage / 100))));
+            ticket.setSellOrderId(sellOrder.getId());
+            ticket.setStatus(Strategy1TicketStatus.BUY_FILLED_SELL_UNFILLED);
+            ticket.setAverageFilledBuyPrice(buyOrder.getFilledAvgPrice());
+            strategy1TicketRepository.save(ticket);
+            logger.info("Successfully updated {} ticket from 'BUY_UNFILLED' to 'BUY_FILLED_SELL_UNFILLED'", ticket.getSymbol());
+        } else {
+            logger.info("Buy order of {} has not been filled - Deleting ticket from database", ticket.getSymbol());
+            strategy1TicketRepository.delete(ticket);
         }
+
     }
 
     private void updateTicket2to3(Strategy1TicketModel ticket) {
@@ -173,9 +168,9 @@ public class Strategy1Service {
     private List<AssetModel> removeAssetsAlreadyBought(List<AssetModel> assets) {
         List<AssetModel> filteredAssets = new ArrayList<>();
         assets.forEach(asset -> {
-                    logger.info("Do we already have uncompleted {} tickets with similar buying price?", asset.getName().split(" /")[0].trim());
-                    checkAssetUncompletedTickets(asset, filteredAssets);
-                });
+            logger.info("Do we already have uncompleted {} tickets with similar buying price?", asset.getName().split(" /")[0].trim());
+            checkAssetUncompletedTickets(asset, filteredAssets);
+        });
         logger.info("Number of opportunities: {}/{}", filteredAssets.size(), assets.size());
         return filteredAssets;
     }
@@ -235,7 +230,8 @@ public class Strategy1Service {
         }
     }
 
-    public void applicationBootingSearchingForUpdates() {
+    @Scheduled(cron = "${STRATEGY_1_UPDATE_CRON}")
+    public void updateUncompletedTickets() {
         logger.info("Updating tickets...");
         List<Strategy1TicketModel> uncompletedTickets = strategy1TicketRepository.findUncompletedTickets();
         uncompletedTickets.forEach(this::updateTicket);

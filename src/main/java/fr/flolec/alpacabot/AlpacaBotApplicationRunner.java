@@ -18,7 +18,7 @@ public class AlpacaBotApplicationRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        strategy1Service.applicationBootingSearchingForUpdates();
+        strategy1Service.updateUncompletedTickets();
     }
 
 }
