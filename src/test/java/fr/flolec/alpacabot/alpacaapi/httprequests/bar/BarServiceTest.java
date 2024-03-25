@@ -49,7 +49,6 @@ class BarServiceTest {
     void wrongLabels() {
         assertThrows(IllegalArgumentException.class, () -> BarTimeFrame.fromLabel("wrong label"));
         assertThrows(IllegalArgumentException.class, () -> PeriodLengthUnit.fromLabel("wrong label"));
-
     }
 
     @Test

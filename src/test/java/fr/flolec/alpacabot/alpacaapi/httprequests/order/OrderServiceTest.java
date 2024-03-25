@@ -2,6 +2,7 @@ package fr.flolec.alpacabot.alpacaapi.httprequests.order;
 
 import fr.flolec.alpacabot.AlpacaBotApplication;
 import fr.flolec.alpacabot.alpacaapi.httprequests.latestquote.LatestQuoteService;
+import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionService;
 import fr.flolec.alpacabot.alpacaapi.websocket.AlpacaWebSocket;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,9 +27,13 @@ public class OrderServiceTest {
     @Autowired
     private AlpacaWebSocket alpacaWebSocket;
 
+    @Autowired
+    private PositionService positionService;
+
     @BeforeEach
     void closeSocket() {
         alpacaWebSocket.closeSocket();
+        positionService.liquidateAllPositions();
     }
 
     @AfterEach
@@ -70,13 +75,11 @@ public class OrderServiceTest {
     @Test
     @DisplayName("Buying $1 of BTC on market for not enough money")
     void createLimitNotionalOrder() throws IOException {
-        //double price = latestQuoteService.getLatestQuote("BTC/USD");
         OrderModel order = orderService.createLimitNotionalOrder(
                 "BTC/USD",
                 "1",
                 OrderSide.BUY,
                 TimeInForce.GTC,
-                // String.valueOf(price))
                 "10");
         assertEquals("buy", order.getSide());
         assertEquals("limit", order.getOrderType());

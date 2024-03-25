@@ -68,9 +68,9 @@ public class AlpacaWebSocketListener extends WebSocketListener {
 
     @Override
     public void onMessage(@NotNull WebSocket webSocket, ByteString bytes) {
+        String message = bytes.utf8();
+        logger.info("Received bytes: {}", message);
         CompletableFuture.runAsync(() -> {
-            String message = bytes.utf8();
-            logger.info("Received bytes: {}", message);
             if (message.contains("\"event\":\"fill\"") || message.contains("\"event\":\"canceled\"")) {
                 OrderModel order = orderService.messageToOrder(message);
                 // C'est ici qu'un choix devra être fait lorsque plusieurs stratégies cohabiteront

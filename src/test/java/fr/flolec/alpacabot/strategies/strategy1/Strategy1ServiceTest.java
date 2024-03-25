@@ -8,10 +8,7 @@ import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderSide;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.TimeInForce;
 import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionService;
 import fr.flolec.alpacabot.alpacaapi.websocket.AlpacaWebSocket;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -45,6 +42,14 @@ public class Strategy1ServiceTest {
 
     @Value("${PREVIOUSLY_BOUGHT_PERCENTAGE}")
     private double previouslyBoughtPercentage;
+
+    @BeforeAll
+    @AfterAll
+    static void setUpTearDown(@Autowired PositionService positionService,
+                      @Autowired Strategy1TicketRepository strategy1TicketRepository) {
+        positionService.liquidateAllPositions();
+        strategy1TicketRepository.deleteAll();
+    }
 
     @BeforeEach
     void closeSocket() {
@@ -81,8 +86,8 @@ public class Strategy1ServiceTest {
         Strategy1TicketModel ticket = strategy1TicketRepository.findByOrder(order.getId());
         assertNotNull(ticket);
         assertEquals(order.getId(), ticket.getBuyOrderId());
-        // CreateTicket appelant updateTicket, le statut a dû passer à BUY_FILLED_SELL_UNFILLED
-        assertEquals(Strategy1TicketStatus.BUY_FILLED_SELL_UNFILLED, ticket.getStatus());
+        // Le websocket étant fermé, le statut reste forcément à BUY_UNFILLED
+        assertEquals(Strategy1TicketStatus.BUY_UNFILLED, ticket.getStatus());
         // Test de 'orderToTicket' (cas nominal)
         Strategy1TicketModel ticket2 = strategy1Service.orderToTicket(order);
         assertEquals(ticket.getBuyOrderId(), ticket2.getBuyOrderId());

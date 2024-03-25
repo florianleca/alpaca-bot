@@ -64,6 +64,19 @@ public class PositionService {
         }
     }
 
+    public void liquidateAllPositions() {
+        Response response;
+        String url = HttpUrl.parse(endpoint).newBuilder()
+                .addQueryParameter("cancel_orders", "true")
+                .toString();
+        try {
+            response = httpRequestService.delete(url);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        response.close();
+    }
+
     private String takeSlashOutOfSymbol(String symbol) {
         String[] symbols = symbol.split("/");
         return symbols[0].trim() + symbols[1].trim();
