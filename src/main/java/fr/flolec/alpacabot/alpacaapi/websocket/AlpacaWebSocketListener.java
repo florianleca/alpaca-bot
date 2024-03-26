@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
@@ -67,18 +68,16 @@ public class AlpacaWebSocketListener extends WebSocketListener {
     }
 
     @Override
+    @Async
     public void onMessage(@NotNull WebSocket webSocket, ByteString bytes) {
         String message = bytes.utf8();
         logger.info("Received bytes: {}", message);
-        CompletableFuture.runAsync(() -> {
-            if (message.contains("\"event\":\"fill\"") || message.contains("\"event\":\"canceled\"")) {
-                OrderModel order = orderService.messageToOrder(message);
-                // C'est ici qu'un choix devra être fait lorsque plusieurs stratégies cohabiteront
-                Strategy1TicketModel ticket = strategy1Service.orderToTicket(order);
-                strategy1Service.updateTicket(ticket);
-            }
-        });
-
+        if (message.contains("\"event\":\"fill\"") || message.contains("\"event\":\"canceled\"")) {
+            OrderModel order = orderService.messageToOrder(message);
+            // C'est ici qu'un choix devra être fait lorsque plusieurs stratégies cohabiteront
+            Strategy1TicketModel ticket = strategy1Service.orderToTicket(order);
+            strategy1Service.updateTicket(ticket);
+        }
     }
 
     @Override
