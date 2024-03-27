@@ -5,10 +5,7 @@ import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderSide;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.TimeInForce;
 import fr.flolec.alpacabot.alpacaapi.websocket.AlpacaWebSocket;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +33,7 @@ public class PositionServiceTest {
     @BeforeEach
     void closeSocket() {
         alpacaWebSocket.closeSocket();
+        positionService.liquidateAllPositions();
     }
 
     @AfterEach
@@ -114,6 +112,20 @@ public class PositionServiceTest {
         double afterLiquidationQty = Double.parseDouble(positionService.getAnOpenPosition("ETH/USD").getQuantity());
         // S'assurer que la quantité a baissé de moitié
         assertEquals(afterBuyQty / 2, afterLiquidationQty, afterBuyQty / 100);
+    }
+
+    @Test
+    @DisplayName("Liquidate all positions")
+    void liquidateAllPositions() throws IOException, InterruptedException {
+        orderService.createMarketNotionalOrder("ETH/USD", "1", OrderSide.BUY, TimeInForce.GTC);
+        orderService.createMarketNotionalOrder("BTC/USD", "1", OrderSide.BUY, TimeInForce.GTC);
+        Thread.sleep(500);
+        double numberOfOpenPositions = positionService.getAllOpenPositions().size();
+        assertEquals(2, numberOfOpenPositions);
+        positionService.liquidateAllPositions();
+        Thread.sleep(250);
+        numberOfOpenPositions = positionService.getAllOpenPositions().size();
+        assertEquals(0, numberOfOpenPositions);
     }
 
 }

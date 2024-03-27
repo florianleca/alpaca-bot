@@ -43,6 +43,14 @@ public class AssetModel implements Comparable<AssetModel> {
 
     private double latestValue;
 
+    public AssetModel() {
+
+    }
+
+    public AssetModel(String name) {
+        this.name = name;
+    }
+
     @Override
     public int compareTo(@NotNull AssetModel o) {
         return name.compareTo(o.getName());

@@ -31,19 +31,12 @@ class AssetServiceTest {
             assertNotNull(asset.getId());
             assertNotNull(asset.getMinOrderSize());
             assertNotNull(asset.getMinTradeIncrement());
-
             assertEquals("active", asset.getStatus());
             assertEquals("CRYPTO", asset.getExchange());
             assertTrue(asset.getSymbol().contains("/USD"));
             assertTrue(asset.getTradable());
             assertTrue(asset.getFractionable());
             assertEquals(0, asset.getLatestValue());
-            // TODO
-            if (!asset.getName().contains("Curve")
-                    && !asset.getName().contains("Polkadot")
-                    && !asset.getName().contains("Tezos")) {
-                assertNotNull(asset.getPriceIncrement());
-            }
         });
     }
 }

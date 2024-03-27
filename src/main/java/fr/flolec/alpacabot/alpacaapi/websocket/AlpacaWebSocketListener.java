@@ -2,6 +2,7 @@ package fr.flolec.alpacabot.alpacaapi.websocket;
 
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
+import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderSide;
 import fr.flolec.alpacabot.strategies.strategy1.Strategy1Service;
 import fr.flolec.alpacabot.strategies.strategy1.Strategy1TicketModel;
 import lombok.Getter;
@@ -15,7 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.CompletableFuture;
 
 @Component
 @Getter
@@ -65,14 +69,13 @@ public class AlpacaWebSocketListener extends WebSocketListener {
     }
 
     @Override
+    @Async
     public void onMessage(@NotNull WebSocket webSocket, ByteString bytes) {
         String message = bytes.utf8();
         logger.info("Received bytes: {}", message);
         if (message.contains("\"event\":\"fill\"")) {
             OrderModel order = orderService.messageToOrder(message);
-            // C'est ici qu'un choix devra être fait lorsque plusieurs stratégies cohabiteront
-            Strategy1TicketModel ticket = strategy1Service.orderToTicket(order);
-            strategy1Service.updateTicket(ticket);
+            strategy1Service.processFilledOrder(order);
         }
     }
 

@@ -1,8 +1,6 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests.position;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.flolec.alpacabot.alpacaapi.httprequests.HttpRequestService;
@@ -62,6 +60,19 @@ public class PositionService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void liquidateAllPositions() {
+        Response response;
+        String url = HttpUrl.parse(endpoint).newBuilder()
+                .addQueryParameter("cancel_orders", "true")
+                .toString();
+        try {
+            response = httpRequestService.delete(url);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        response.close();
     }
 
     private String takeSlashOutOfSymbol(String symbol) {
