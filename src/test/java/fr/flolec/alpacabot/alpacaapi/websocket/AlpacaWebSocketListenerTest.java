@@ -1,16 +1,23 @@
 package fr.flolec.alpacabot.alpacaapi.websocket;
 
 import fr.flolec.alpacabot.AlpacaBotApplication;
+import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
+import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
 import okio.ByteString;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -49,4 +56,31 @@ public class AlpacaWebSocketListenerTest {
         alpacaWebSocketListener.onMessage(alpacaWebSocket.getWebSocket(), messageBytes);
         verify(alpacaWebSocketListener.getLogger(), times(1)).info("Received bytes: {}", messageText);
     }
+
+//    @Test
+//    public void testOnMessage() throws InterruptedException {
+//        // Créer un mock de WebSocket et de OrderService
+//        AlpacaWebSocketListener webSocket = Mockito.mock(AlpacaWebSocketListener.class);
+//        OrderService orderService = Mockito.mock(OrderService.class);
+//
+//
+//        // Capturer les arguments passés au service d'ordre
+//        ArgumentCaptor<OrderModel> orderCaptor = ArgumentCaptor.forClass(OrderModel.class);
+//
+//        // Créer un verrou de comptage pour attendre l'exécution de la méthode asynchrone
+//        CountDownLatch latch = new CountDownLatch(1);
+//
+//        // Appeler la méthode asynchrone
+//        alpacaWebSocketListener.onMessage(alpacaWebSocket.getWebSocket(), ByteString.encodeUtf8("{\"event\":\"fill\"}"));
+//
+//        // Attendre que la méthode asynchrone soit exécutée (ou échoue après un certain délai)
+//        latch.await(5, TimeUnit.SECONDS);
+//
+//        // Vérifier que le service d'ordre a été appelé avec les arguments attendus
+//        Mockito.verify(orderService).messageToOrder(Mockito.anyString());
+//        Mockito.verify(orderService).processFilledOrder(orderCaptor.capture());
+//        assertEquals("{\"event\":\"fill\"}", orderCaptor.getValue().getMessage()); // Assurez-vous que le message est correct
+//
+//        // Vous pouvez également vérifier d'autres comportements ici
+//    }
 }

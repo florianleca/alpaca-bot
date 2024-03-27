@@ -29,27 +29,33 @@ public class Strategy1TicketModel {
     @Field("status")
     private Strategy1TicketStatus status;
 
-    @Field("position_qty_before_buying")
-    private double positionQtyBeforeBuyOrder;
-
-    @Field("position_qty_after_buying")
-    private double positionQtyAfterBuyOrder;
+    @Field("bought_quantity")
+    private double boughtQuantity;
 
     @Field("average_filled_buy_price")
     private double averageFilledBuyPrice;
+
+    @Field("sold_quantity")
+    private double soldQuantity;
+
+    @Field("average_filled_sell_price")
+    private double averageFilledSellPrice;
 
     public Strategy1TicketModel() {
     }
 
 
-    public Strategy1TicketModel(OrderModel buyOrder, double positionQtyBeforeBuyOrder) throws IllegalArgumentException {
-        if (!buyOrder.getStatus().equals("pending_new")) {
-            throw new IllegalArgumentException("Illegal buy order status when creating ticket: " + buyOrder.getStatus());
+    public Strategy1TicketModel(OrderModel buyOrder) throws IllegalArgumentException {
+        if (!buyOrder.getSide().equals("buy")) {
+            throw new IllegalArgumentException("Trying to create a ticket without a buy order: " + buyOrder.getSide());
+        }
+        if (!buyOrder.getStatus().equals("filled")) {
+            throw new IllegalArgumentException("Trying to create a ticket with an unfilled buy order: " + buyOrder.getStatus());
         }
         this.symbol = buyOrder.getSymbol();
         this.buyOrderId = buyOrder.getId();
-        this.status = Strategy1TicketStatus.BUY_UNFILLED;
-        this.positionQtyBeforeBuyOrder = positionQtyBeforeBuyOrder;
+        this.boughtQuantity = buyOrder.getFilledQuantity();
+        this.averageFilledBuyPrice = buyOrder.getFilledAvgPrice();
     }
 
     @Override
