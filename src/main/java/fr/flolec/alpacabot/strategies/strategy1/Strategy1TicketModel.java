@@ -41,28 +41,4 @@ public class Strategy1TicketModel {
     @Field("average_filled_sell_price")
     private double averageFilledSellPrice;
 
-    public Strategy1TicketModel() {
-    }
-
-
-    public Strategy1TicketModel(OrderModel buyOrder) throws IllegalArgumentException {
-        if (!buyOrder.getSide().equals("buy")) {
-            throw new IllegalArgumentException("Trying to create a ticket without a buy order: " + buyOrder.getSide());
-        }
-        if (!buyOrder.getStatus().equals("filled")) {
-            throw new IllegalArgumentException("Trying to create a ticket with an unfilled buy order: " + buyOrder.getStatus());
-        }
-        this.symbol = buyOrder.getSymbol();
-        this.buyOrderId = buyOrder.getId();
-        this.boughtQuantity = buyOrder.getFilledQuantity();
-        this.averageFilledBuyPrice = buyOrder.getFilledAvgPrice();
-    }
-
-    @Override
-    public String toString() {
-        return "Strategy1TicketModel{" +
-                "symbol='" + symbol + '\'' +
-                ", status=" + status +
-                '}';
-    }
 }

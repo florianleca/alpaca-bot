@@ -108,12 +108,8 @@ public enum BarTimeFrame {
         throw new IllegalArgumentException("No matching constant for " + label);
     }
 
-    private String getLabel() {
+    public String getLabel() {
         return this.label;
     }
 
-    @Override
-    public String toString() {
-        return this.label;
-    }
 }

@@ -12,7 +12,9 @@
     <artifactId>alpaca-bot</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>Alpaca Bot</name>
-    <description>Using the Alpaca trading API to create a bot automatically placing stock and crypto orders according to given strategies.</description>
+    <description>Using the Alpaca trading API to create a bot automatically placing stock and crypto orders according to
+        given strategies.
+    </description>
     <properties>
         <java.version>17</java.version>
         <sonar.organization>florianleca</sonar.organization>
@@ -43,7 +45,17 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.16.0</version>
+            <version>2.17.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.17.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.17.1</version>
         </dependency>
         <dependency>
             <groupId>org.junit.platform</groupId>
@@ -58,9 +70,21 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.wiremock</groupId>
+            <artifactId>wiremock-jetty12</artifactId>
+            <version>3.6.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
+<!--        <resources>-->
+<!--            <resource>-->
+<!--                <directory>src/main/resources</directory>-->
+<!--                <filtering>true</filtering>-->
+<!--            </resource>-->
+<!--        </resources>-->
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -79,13 +103,13 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <activatedProperties>local</activatedProperties>
+                <spring.profiles.active>local</spring.profiles.active>
             </properties>
         </profile>
         <profile>
             <id>secret</id>
             <properties>
-                <activatedProperties>secret</activatedProperties>
+                <spring.profiles.active>secret</spring.profiles.active>
             </properties>
             <build>
                 <plugins>

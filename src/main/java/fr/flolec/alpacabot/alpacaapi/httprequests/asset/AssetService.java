@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class AssetService {
@@ -36,11 +37,12 @@ public class AssetService {
      * @throws IOException If an I/O error occurs while fetching or processing the data
      */
     public List<AssetModel> getAssetsList() throws IOException {
-        String url = HttpUrl.parse(endpoint).newBuilder()
+        String url = Objects.requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
                 .addQueryParameter("status", "active")
                 .addQueryParameter("exchange", "CRYPTO")
                 .toString();
         Response response = httpRequestService.get(url);
+        assert response.body() != null;
         JsonNode jsonNode = objectMapper.readTree(response.body().string());
         List<AssetModel> assets = objectMapper.treeToValue(jsonNode, new TypeReference<ArrayList<AssetModel>>() {
         });
@@ -50,7 +52,7 @@ public class AssetService {
     }
 
     public void selectUSDAssets(List<AssetModel> assets) {
-        assets.removeIf(asset -> !asset.toString().contains(" / US Dollar"));
+        assets.removeIf(asset -> !asset.getName().contains(" / US Dollar"));
     }
 
 }

@@ -33,6 +33,7 @@ public class AccountDetailsService {
      */
     public AccountDetailsModel getAccountDetails() throws IOException {
         Response response = httpRequestService.get(endpoint);
+        assert response.body() != null;
         JsonNode jsonNode = objectMapper.readTree(response.body().string());
         return objectMapper.treeToValue(jsonNode, AccountDetailsModel.class);
     }

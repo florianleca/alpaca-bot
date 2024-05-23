@@ -3,13 +3,14 @@ package fr.flolec.alpacabot.strategies.strategy1;
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetService;
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarService;
+import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarTimeFrame;
+import fr.flolec.alpacabot.alpacaapi.httprequests.bar.PeriodLengthUnit;
 import fr.flolec.alpacabot.alpacaapi.httprequests.latestquote.LatestQuoteService;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -22,13 +23,6 @@ import java.util.List;
 @Setter
 public class Strategy1OpportunityChecker {
 
-    private final Logger logger = LoggerFactory.getLogger(Strategy1Service.class);
-    private AssetService assetService;
-    private final BarService barService;
-    private final LatestQuoteService latestQuoteService;
-    private final Strategy1TicketRepository strategy1TicketRepository;
-    private final Strategy1Service strategy1Service;
-
     @Value("${THRESHOLD}")
     private double threshold;
     @Value("${TIMEFRAME}")
@@ -40,84 +34,116 @@ public class Strategy1OpportunityChecker {
     @Value("${PREVIOUSLY_BOUGHT_PERCENTAGE}")
     private double previouslyBoughtPercentage;
 
+    private final BarService barService;
+    private final LatestQuoteService latestQuoteService;
+    private final Strategy1TicketRepository strategy1TicketRepository;
+    private Logger logger = LoggerFactory.getLogger(Strategy1Service.class);
+    private AssetService assetService;
+
     @Autowired
     public Strategy1OpportunityChecker(AssetService assetService,
                                        BarService barService,
                                        LatestQuoteService latestQuoteService,
-                                       Strategy1TicketRepository strategy1TicketRepository,
-                                       Strategy1Service strategy1Service) {
+                                       Strategy1TicketRepository strategy1TicketRepository) {
         this.assetService = assetService;
         this.barService = barService;
         this.latestQuoteService = latestQuoteService;
         this.strategy1TicketRepository = strategy1TicketRepository;
-        this.strategy1Service = strategy1Service;
     }
 
-    @Scheduled(cron = "${STRATEGY_1_CRON}")
-    public void checkBuyOpportunities() throws IOException {
+    public List<AssetModel> checkBuyOpportunities() throws IOException {
         logger.info("[STRATEGY 1] [BUY OPPORTUNITIES]");
         List<AssetModel> assets = assetService.getAssetsList(); // On commence par prendre la liste de tous les assets existants
         assets = removeAssetsUnderThreshold(assets);            // On retire les assets dont le prix ne représente pas une opportunité
-        assets = removeAssetsAlreadyBought(assets);             // On retire les assets ayant un ordre d'achat filled mais pas encore revendu (pas de dual sellOrder) dont le prix est trop proche du cours actuel
-        assets.forEach(strategy1Service::createBuyOrder);
+        return removeAssetsAlreadyBought(assets);             // On retire les assets ayant un ordre d'achat filled mais pas encore revendu (pas de dual sellOrder) dont le prix est trop proche du cours actuel
     }
 
     public List<AssetModel> removeAssetsUnderThreshold(List<AssetModel> assets) {
         List<AssetModel> filteredAssets = new ArrayList<>();
         assets.forEach(asset -> {
-            logger.info("Is {}'s price interesting?", asset.getName().split(" /")[0].trim());
-            try {
-                asset.setLatestValue(latestQuoteService.getLatestQuote(asset));
-                double maxHigh = barService.getMaxHighOnPeriod(asset, barTimeFrameLabel, periodLength, periodLengthUnitLabel);
-                maxHigh = Math.max(maxHigh, asset.getLatestValue());
-                if (decreasedMoreThanThreshold(asset, maxHigh)) {
-                    filteredAssets.add(asset);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            if (isAssetPriceLowEnough(asset)) filteredAssets.add(asset);
         });
         logger.info("Number of opportunities: {}/{}", filteredAssets.size(), assets.size());
         return filteredAssets;
     }
 
-    public boolean decreasedMoreThanThreshold(AssetModel asset, double maxHigh) {
-        if (asset.getLatestValue() > maxHigh) {
-            throw new RuntimeException("Asset latest value should be above its maxHigh");
+    public boolean isAssetPriceLowEnough(AssetModel asset) {
+        logger.info("Has {}'s price decreased enough to be bought?", asset.getName().split(" /")[0].trim());
+        try {
+            double assetLatestValue = latestQuoteService.getLatestQuote(asset);
+            asset.setLatestValue(assetLatestValue);
+            double maxHigh = barService.getMaxHighOnPeriod(asset, BarTimeFrame.fromLabel(barTimeFrameLabel), periodLength, PeriodLengthUnit.fromLabel(periodLengthUnitLabel));
+            maxHigh = Math.max(maxHigh, assetLatestValue);
+            if (decreasedMoreThanThreshold(asset, assetLatestValue, maxHigh)) {
+                return true;
+            }
+        } catch (IOException e) {
+            logger.error("Error while fetching latest quote or max high for {}: {}", asset.getSymbol(), e.getMessage());
         }
-        double decreasePercent = ((maxHigh - asset.getLatestValue()) / maxHigh) * 100;
+        return false;
+    }
+
+
+    public boolean decreasedMoreThanThreshold(AssetModel asset, double assetLatestValue, double maxHigh) {
+        if (maxHigh == 0) {
+            logger.error("Max high of {} is 0, which should not be possible", asset.getSymbol());
+            return false;
+        }
+        if (assetLatestValue > maxHigh) {
+            logger.error("Latest value of {} is higher than its max high, which should not be possible", asset.getSymbol());
+            return false;
+        }
+        double decreasePercent = (((maxHigh - assetLatestValue) / maxHigh) * 100);
         logAssetThresholdState(asset, decreasePercent, maxHigh);
         return decreasePercent >= threshold;
+    }
+
+    public void logAssetThresholdState(AssetModel asset, double decreasePercent, double maxHigh) {
+        String decreasedPercentString = BigDecimal.valueOf(decreasePercent)
+                .setScale(2, RoundingMode.HALF_DOWN)
+                .toString();
+        String state;
+        if (decreasePercent >= threshold) {
+            state = "🟢";
+        } else {
+            state = "🔴";
+        }
+        logger.info("[{}📉 {}%] {} ({}): [Highest: ${}] [Latest: {}$]",
+                state,
+                decreasedPercentString,
+                asset.getName().split(" /")[0].trim(),
+                asset.getSymbol(),
+                maxHigh,
+                asset.getLatestValue());
     }
 
     public List<AssetModel> removeAssetsAlreadyBought(List<AssetModel> assets) {
         List<AssetModel> filteredAssets = new ArrayList<>();
         assets.forEach(asset -> {
-            logger.info("Do we already have uncompleted {} tickets with similar buying price?", asset.getName().split(" /")[0].trim());
-            checkAssetUncompletedTickets(asset, filteredAssets);
+            if (checkAssetUncompletedTickets(asset)) filteredAssets.add(asset);
         });
         logger.info("Number of opportunities: {}/{}", filteredAssets.size(), assets.size());
         return filteredAssets;
     }
 
-    private void checkAssetUncompletedTickets(AssetModel asset, List<AssetModel> filteredAssets) {
+    public boolean checkAssetUncompletedTickets(AssetModel asset) {
+        logger.info("Do we already have uncompleted {} tickets with similar buying price?", asset.getName().split(" /")[0].trim());
         // pour chaque asset, récupérer la liste des uncompleted tickets de cet asset
         List<Strategy1TicketModel> tickets = strategy1TicketRepository.findUncompletedTickets(asset.getSymbol());
         // si la liste est vide : is ok
         if (tickets.isEmpty()) {
-            logger.info("\uD83D\uDFE2 No uncompleted {} tickets in database", asset.getSymbol());
-            filteredAssets.add(asset);
-        } else {
-            // sinon : on calcule la valeur minimale
-            Double minBuyPrice = minBuyPriceFromTicketList(tickets);
-            // si la valeur minimum d'achat est plus grande que (valeur actuelle + delta) :  is ok
-            if (minBuyPrice > (1 + (previouslyBoughtPercentage / 100)) * asset.getLatestValue()) {
-                logger.info("\uD83D\uDFE2 Min value of {} tickets in DB is high enough ({}) compared to current value ({})", asset.getSymbol(), minBuyPrice, asset.getLatestValue());
-                filteredAssets.add(asset);
-            } else {
-                logger.info("\uD83D\uDD34 Min value of {} tickets in DB is NOT high enough ({}) compared to current value ({})", asset.getSymbol(), minBuyPrice, asset.getLatestValue());
-            }
+            logger.info("🟢 No uncompleted {} tickets in database", asset.getSymbol());
+            return true;
         }
+        // sinon : on calcule la valeur minimale
+        Double minBuyPrice = minBuyPriceFromTicketList(tickets);
+        // si la valeur minimum d'achat est plus grande que (valeur actuelle + delta) :  is ok
+        if (minBuyPrice > (1 + (previouslyBoughtPercentage / 100)) * asset.getLatestValue()) {
+            logger.info("🟢 Min value of {} tickets in DB is high enough ({}) compared to current value ({})", asset.getSymbol(), minBuyPrice, asset.getLatestValue());
+            return true;
+        }
+        logger.info("🔴 Min value of {} tickets in DB is NOT high enough ({}) compared to current value ({})", asset.getSymbol(), minBuyPrice, asset.getLatestValue());
+        return false;
     }
 
     public Double minBuyPriceFromTicketList(List<Strategy1TicketModel> tickets) {
@@ -127,22 +153,4 @@ public class Strategy1OpportunityChecker {
                 .orElse(-1.);
     }
 
-    private void logAssetThresholdState(AssetModel asset, double decreasePercent, double maxHigh) {
-        String decreasedPercentString = BigDecimal.valueOf(decreasePercent)
-                .setScale(2, RoundingMode.HALF_DOWN)
-                .toString();
-        String state;
-        if (decreasePercent >= threshold) {
-            state = "\uD83D\uDFE2";
-        } else {
-            state = "\uD83D\uDD34";
-        }
-        logger.info("[{}\uD83D\uDCC9 {}%] {} ({}): [Highest: ${}] [Latest: {}$]",
-                state,
-                decreasedPercentString,
-                asset.getName().split(" /")[0].trim(),
-                asset.getSymbol(),
-                maxHigh,
-                asset.getLatestValue());
-    }
 }

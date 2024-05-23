@@ -12,9 +12,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 @Component
@@ -43,13 +44,14 @@ public class BarService {
      * @throws IOException If an I/O error occurs while fetching or processing the data
      */
     public List<BarModel> getHistoricalBars(AssetModel asset, BarTimeFrame barTimeFrame, long periodLength, PeriodLengthUnit periodLengthUnit) throws IOException {
-        String url = HttpUrl.parse(endpoint).newBuilder()
+        String url = Objects.requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
                 .addQueryParameter("symbols", asset.getSymbol())
-                .addQueryParameter("timeframe", barTimeFrame.toString())
-                .addQueryParameter("start", periodLengthUnit.goBackInTime(OffsetDateTime.now(), periodLength))
+                .addQueryParameter("timeframe", barTimeFrame.getLabel())
+                .addQueryParameter("start", periodLengthUnit.goBackInTime(LocalDateTime.now(), periodLength))
                 .addQueryParameter("end", PeriodLengthUnit.now())
                 .toString();
         Response response = httpRequestService.get(url);
+        assert response.body() != null;
         JsonNode jsonNode = objectMapper.readTree(response.body().string()).path("bars").path(asset.getSymbol());
         return objectMapper.treeToValue(jsonNode, new TypeReference<ArrayList<BarModel>>() {
         });
@@ -61,9 +63,4 @@ public class BarService {
         return bars.stream().mapToDouble(BarModel::getHigh).max().orElse(-1);
     }
 
-    public double getMaxHighOnPeriod(AssetModel asset, String barTimeFrameLabel, long periodLength, String periodLengthUnitLabel) throws IOException {
-        BarTimeFrame barTimeFrame = BarTimeFrame.fromLabel(barTimeFrameLabel);
-        PeriodLengthUnit periodLengthUnit = PeriodLengthUnit.fromLabel(periodLengthUnitLabel);
-        return getMaxHighOnPeriod(asset, barTimeFrame, periodLength, periodLengthUnit);
-    }
 }

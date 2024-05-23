@@ -14,16 +14,12 @@ import java.io.IOException;
 public class HttpRequestService {
 
     private final OkHttpClient okHttpClient = getOkHttpClient();
-    private final String keyId;
-    private final String secretKey;
 
+    @Value("${ALPACA_API_KEY_ID}")
+    private String keyId;
 
-
-    public HttpRequestService(@Value("${ALPACA_API_KEY_ID}") String keyId,
-                              @Value("${ALPACA_API_SECRET_KEY}") String secretKey) {
-        this.keyId = keyId;
-        this.secretKey = secretKey;
-    }
+    @Value("${ALPACA_API_SECRET_KEY}")
+    private String secretKey;
 
     @Bean
     public OkHttpClient getOkHttpClient() {
