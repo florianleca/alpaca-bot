@@ -3,8 +3,6 @@ package fr.flolec.alpacabot.alpacaapi.websocket;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
 import fr.flolec.alpacabot.strategies.strategy1.Strategy1Service;
-import fr.flolec.alpacabot.strategies.strategy1.Strategy1TicketModel;
-import lombok.Getter;
 import lombok.Setter;
 import okhttp3.Response;
 import okhttp3.WebSocket;
@@ -15,28 +13,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Component
-@Getter
 @Setter
 public class AlpacaWebSocketListener extends WebSocketListener {
 
-    private final String keyId;
-    private final String secretKey;
-    private final OrderService orderService;
-    private final Strategy1Service strategy1Service;
-    private Logger logger = LoggerFactory.getLogger(AlpacaWebSocketListener.class);
+    @Value("${ALPACA_API_KEY_ID}")
+    private String keyId;
+
+    @Value("${ALPACA_API_SECRET_KEY}")
+    private String secretKey;
+
+    private OrderService orderService;
+    private Strategy1Service strategy1Service;
+    private Logger logger;
 
     @Autowired
-    public AlpacaWebSocketListener(@Value("${ALPACA_API_KEY_ID}") String keyId,
-                                   @Value("${ALPACA_API_SECRET_KEY}") String secretKey,
-                                   OrderService orderService,
+    public AlpacaWebSocketListener(OrderService orderService,
                                    Strategy1Service strategy1Service) {
-        this.keyId = keyId;
-        this.secretKey = secretKey;
         this.orderService = orderService;
         this.strategy1Service = strategy1Service;
+        this.logger = LoggerFactory.getLogger(AlpacaWebSocketListener.class);
     }
 
     @Override
@@ -65,14 +64,13 @@ public class AlpacaWebSocketListener extends WebSocketListener {
     }
 
     @Override
+    @Async
     public void onMessage(@NotNull WebSocket webSocket, ByteString bytes) {
         String message = bytes.utf8();
         logger.info("Received bytes: {}", message);
         if (message.contains("\"event\":\"fill\"")) {
             OrderModel order = orderService.messageToOrder(message);
-            // C'est ici qu'un choix devra être fait lorsque plusieurs stratégies cohabiteront
-            Strategy1TicketModel ticket = strategy1Service.orderToTicket(order);
-            strategy1Service.updateTicket(ticket);
+            strategy1Service.processFilledOrder(order);
         }
     }
 
@@ -80,11 +78,6 @@ public class AlpacaWebSocketListener extends WebSocketListener {
     public void onClosing(WebSocket webSocket, int code, @NotNull String reason) {
         webSocket.close(1000, null);
         logger.info("WebSocket closing: {} - {}", code, reason);
-    }
-
-    @Override
-    public void onFailure(@NotNull WebSocket webSocket, Throwable t, Response response) {
-        t.printStackTrace();
     }
 
 }

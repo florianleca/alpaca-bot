@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public interface Strategy1TicketRepository extends MongoRepository<Strategy1TicketModel, String> {
 
-    @Query("{ $or: [ { '_id' : ?0 }, { 'sell_order_id' : ?0 } ] }")
+    @Query("{ $or: [ { 'buy_order_id' : ?0 }, { 'sell_order_id' : ?0 } ] }")
     Strategy1TicketModel findByOrder(String orderId);
 
     @Query("{ 'status' :  {$ne: 'COMPLETE'} }")

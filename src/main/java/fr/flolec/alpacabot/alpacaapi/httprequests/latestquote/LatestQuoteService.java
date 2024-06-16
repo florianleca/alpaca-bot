@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @Component
 public class LatestQuoteService {
@@ -33,10 +34,11 @@ public class LatestQuoteService {
     }
 
     public double getLatestQuote(String symbol) throws IOException {
-        String url = HttpUrl.parse(endpoint).newBuilder()
+        String url = Objects.requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
                 .addQueryParameter("symbols", symbol)
                 .toString();
         Response response = httpRequestService.get(url);
+        assert response.body() != null;
         JsonNode jsonNode = objectMapper.readTree(response.body().string()).path("quotes").path(symbol).path("ap");
         return objectMapper.treeToValue(jsonNode, Double.class);
     }

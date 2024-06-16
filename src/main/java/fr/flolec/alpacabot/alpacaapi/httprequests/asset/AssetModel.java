@@ -48,10 +48,4 @@ public class AssetModel implements Comparable<AssetModel> {
         return name.compareTo(o.getName());
     }
 
-    // Collection.sort() won't work without overriding toString()
-    @Override
-    public String toString() {
-        return name;
-    }
-
 }
