@@ -5,6 +5,8 @@ import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderSide;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.TimeInForce;
+import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionService;
+import fr.flolec.alpacabot.alpacaapi.websocket.AlpacaWebSocketListener;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +25,10 @@ public class Strategy1Service {
     private final OrderService orderService;
     private final Strategy1TicketRepository strategy1TicketRepository;
     private final Strategy1OpportunityChecker strategy1OpportunityChecker;
+    private final AlpacaWebSocketListener alpacaWebSocketListener;
+    private final PositionService positionService;
     private Logger logger = LoggerFactory.getLogger(Strategy1Service.class);
+
     @Value("${NOTIONAL}")
     private double notional;
 
@@ -33,16 +38,31 @@ public class Strategy1Service {
     @Autowired
     public Strategy1Service(OrderService orderService,
                             Strategy1TicketRepository strategy1TicketRepository,
-                            Strategy1OpportunityChecker strategy1OpportunityChecker) {
+                            Strategy1OpportunityChecker strategy1OpportunityChecker,
+                            AlpacaWebSocketListener alpacaWebSocketListener,
+                            PositionService positionService) {
         this.orderService = orderService;
         this.strategy1TicketRepository = strategy1TicketRepository;
         this.strategy1OpportunityChecker = strategy1OpportunityChecker;
+        this.alpacaWebSocketListener = alpacaWebSocketListener;
+        this.positionService = positionService;
     }
 
     @Scheduled(cron = "${STRATEGY_1_CRON}")
     public void checkBuyOpportunitiesAndBuy() throws IOException {
         List<AssetModel> assets = strategy1OpportunityChecker.checkBuyOpportunities();
         assets.forEach(this::createBuyOrder);
+        processUntreatedMessages();
+    }
+
+    public void processUntreatedMessages() {
+        List<String> untreatedMessages = alpacaWebSocketListener.getUntreatedMessages();
+        untreatedMessages.forEach(message -> {
+            logger.info("Processing filled order message: {}", message);
+            OrderModel order = orderService.messageToOrder(message);
+            processFilledOrder(order);
+        });
+        alpacaWebSocketListener.clearMessages();
     }
 
     public void createBuyOrder(AssetModel asset) {
@@ -67,7 +87,7 @@ public class Strategy1Service {
         try {
             OrderModel sellOrder = orderService.createLimitQuantityOrder(
                     ticket.getSymbol(),
-                    String.valueOf(ticket.getBoughtQuantity()),
+                    String.valueOf(ticket.getBoughtQuantityAfterFees()),
                     OrderSide.SELL,
                     TimeInForce.GTC,
                     String.valueOf(ticket.getAverageFilledBuyPrice() * (1 + (gainPercentage / 100))));
@@ -103,9 +123,15 @@ public class Strategy1Service {
             logger.error("Trying to process a filled buy order which ticket was not \"BUY_UNFILLED\" but {}", ticket.getStatus());
             return;
         }
-        ticket.setBoughtQuantity(order.getFilledQuantity());
-        ticket.setAverageFilledBuyPrice(order.getFilledAvgPrice());
-        createSellOrder(ticket);
+
+        try {
+            ticket.setBoughtQuantityAfterFees(Double.parseDouble(positionService.getAnOpenPosition(ticket.getSymbol()).getQuantityAvailable()));
+            ticket.setBoughtQuantity(order.getFilledQuantity());
+            ticket.setAverageFilledBuyPrice(order.getFilledAvgPrice());
+            createSellOrder(ticket);
+        } catch (IOException e) {
+            logger.error("Failed to retrieve the available quantity of asset {}: {}", ticket.getSymbol(), e.getMessage());
+        }
     }
 
     public void processFilledSellOrder(OrderModel order) {

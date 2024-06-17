@@ -1,8 +1,6 @@
 package fr.flolec.alpacabot.alpacaapi.websocket;
 
-import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
-import fr.flolec.alpacabot.strategies.strategy1.Strategy1Service;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okio.ByteString;
@@ -14,8 +12,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class AlpacaWebSocketListenerTest {
@@ -29,8 +33,7 @@ public class AlpacaWebSocketListenerTest {
     private Logger logger;
     @Mock
     private OrderService orderService;
-    @Mock
-    private Strategy1Service strategy1Service;
+
     @InjectMocks
     private AlpacaWebSocketListener alpacaWebSocketListener;
 
@@ -62,13 +65,10 @@ public class AlpacaWebSocketListenerTest {
 
     @Test
     void onGoodMessageBytes() {
-        OrderModel order = new OrderModel();
-        when(orderService.messageToOrder(messageText)).thenReturn(order);
-
         alpacaWebSocketListener.onMessage(webSocket, ByteString.encodeUtf8(messageText));
+
         verify(logger).info("Received bytes: {}", messageText);
-        verify(orderService).messageToOrder(messageText);
-        verify(strategy1Service).processFilledOrder(order);
+        assertTrue(alpacaWebSocketListener.getUntreatedMessages().contains(messageText));
     }
 
     @Test
@@ -78,6 +78,15 @@ public class AlpacaWebSocketListenerTest {
         alpacaWebSocketListener.onClosing(webSocket, code, reason);
         verify(webSocket).close(1000, null);
         verify(logger).info("WebSocket closing: {} - {}", code, reason);
+    }
+
+    @Test
+    public void testClearMessages() {
+        List<String> messages = List.of("a", "b", "c");
+        alpacaWebSocketListener.setUntreatedMessages(new ArrayList<>(messages));
+        assertFalse(alpacaWebSocketListener.getUntreatedMessages().isEmpty());
+        alpacaWebSocketListener.clearMessages();
+        assertTrue(alpacaWebSocketListener.getUntreatedMessages().isEmpty());
     }
 
 }

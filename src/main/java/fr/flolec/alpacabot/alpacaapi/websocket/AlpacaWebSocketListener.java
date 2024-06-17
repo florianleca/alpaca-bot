@@ -1,8 +1,5 @@
 package fr.flolec.alpacabot.alpacaapi.websocket;
 
-import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
-import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
-import fr.flolec.alpacabot.strategies.strategy1.Strategy1Service;
 import lombok.Setter;
 import okhttp3.Response;
 import okhttp3.WebSocket;
@@ -16,6 +13,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 @Setter
 public class AlpacaWebSocketListener extends WebSocketListener {
@@ -26,16 +26,17 @@ public class AlpacaWebSocketListener extends WebSocketListener {
     @Value("${ALPACA_API_SECRET_KEY}")
     private String secretKey;
 
-    private OrderService orderService;
-    private Strategy1Service strategy1Service;
     private Logger logger;
+    private List<String> untreatedMessages;
+
+    public List<String> getUntreatedMessages() {
+        return untreatedMessages;
+    }
 
     @Autowired
-    public AlpacaWebSocketListener(OrderService orderService,
-                                   Strategy1Service strategy1Service) {
-        this.orderService = orderService;
-        this.strategy1Service = strategy1Service;
+    public AlpacaWebSocketListener() {
         this.logger = LoggerFactory.getLogger(AlpacaWebSocketListener.class);
+        this.untreatedMessages = new ArrayList<>();
     }
 
     @Override
@@ -69,8 +70,7 @@ public class AlpacaWebSocketListener extends WebSocketListener {
         String message = bytes.utf8();
         logger.info("Received bytes: {}", message);
         if (message.contains("\"event\":\"fill\"")) {
-            OrderModel order = orderService.messageToOrder(message);
-            strategy1Service.processFilledOrder(order);
+            untreatedMessages.add(message);
         }
     }
 
@@ -80,4 +80,7 @@ public class AlpacaWebSocketListener extends WebSocketListener {
         logger.info("WebSocket closing: {} - {}", code, reason);
     }
 
+    public void clearMessages() {
+        untreatedMessages.clear();
+    }
 }

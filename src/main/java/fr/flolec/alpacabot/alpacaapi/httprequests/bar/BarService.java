@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -47,7 +47,7 @@ public class BarService {
         String url = Objects.requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
                 .addQueryParameter("symbols", asset.getSymbol())
                 .addQueryParameter("timeframe", barTimeFrame.getLabel())
-                .addQueryParameter("start", periodLengthUnit.goBackInTime(LocalDateTime.now(), periodLength))
+                .addQueryParameter("start", periodLengthUnit.goBackInTime(OffsetDateTime.now(), periodLength))
                 .addQueryParameter("end", PeriodLengthUnit.now())
                 .toString();
         Response response = httpRequestService.get(url);
