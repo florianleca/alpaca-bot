@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.sql.Date;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -85,13 +87,12 @@ class BarServiceTest extends WireMockedTest {
     @Test
     @DisplayName("Each goBackInTime method in PeriodLengthUnit is correct")
     void periodLengthUnitGoBackInTime() {
-        LocalDateTime start = LocalDateTime.of(2024, 12, 25, 13, 54);
-
-        assertEquals("2024-12-25T13:44:00", PeriodLengthUnit.MIN.goBackInTime(start, 10));
-        assertEquals("2024-12-25T10:54:00", PeriodLengthUnit.HOUR.goBackInTime(start, 3));
-        assertEquals("2024-12-20T13:54:00", PeriodLengthUnit.DAY.goBackInTime(start, 5));
-        assertEquals("2024-12-18T13:54:00", PeriodLengthUnit.WEEK.goBackInTime(start, 1));
-        assertEquals("2024-08-25T13:54:00", PeriodLengthUnit.MONTH.goBackInTime(start, 4));
+        OffsetDateTime start = OffsetDateTime.of(LocalDateTime.of(2024, 12, 25, 13, 54), ZoneOffset.ofHours(2));
+        assertEquals("2024-12-25T13:44:00+02:00", PeriodLengthUnit.MIN.goBackInTime(start, 10));
+        assertEquals("2024-12-25T10:54:00+02:00", PeriodLengthUnit.HOUR.goBackInTime(start, 3));
+        assertEquals("2024-12-20T13:54:00+02:00", PeriodLengthUnit.DAY.goBackInTime(start, 5));
+        assertEquals("2024-12-18T13:54:00+02:00", PeriodLengthUnit.WEEK.goBackInTime(start, 1));
+        assertEquals("2024-08-25T13:54:00+02:00", PeriodLengthUnit.MONTH.goBackInTime(start, 4));
     }
 
 }

@@ -1,42 +1,42 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests.bar;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
 public enum PeriodLengthUnit {
 
     MIN("Min") {
         @Override
-        public String goBackInTime(LocalDateTime dateTime, long amount) {
+        public String goBackInTime(OffsetDateTime dateTime, long amount) {
             return dateTime.minusMinutes(amount).format(rfc3339Formatter);
         }
     },
     HOUR("Hour") {
         @Override
-        public String goBackInTime(LocalDateTime dateTime, long amount) {
+        public String goBackInTime(OffsetDateTime dateTime, long amount) {
             return dateTime.minusHours(amount).format(rfc3339Formatter);
         }
     },
     DAY("Day") {
         @Override
-        public String goBackInTime(LocalDateTime dateTime, long amount) {
+        public String goBackInTime(OffsetDateTime dateTime, long amount) {
             return dateTime.minusDays(amount).format(rfc3339Formatter);
         }
     },
     WEEK("Week") {
         @Override
-        public String goBackInTime(LocalDateTime dateTime, long amount) {
+        public String goBackInTime(OffsetDateTime dateTime, long amount) {
             return dateTime.minusWeeks(amount).format(rfc3339Formatter);
         }
     },
     MONTH("Month") {
         @Override
-        public String goBackInTime(LocalDateTime dateTime, long amount) {
+        public String goBackInTime(OffsetDateTime dateTime, long amount) {
             return dateTime.minusMonths(amount).format(rfc3339Formatter);
         }
     };
 
-    public static final DateTimeFormatter rfc3339Formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    public static final DateTimeFormatter rfc3339Formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
     public final String label;
 
     PeriodLengthUnit(String label) {
@@ -53,13 +53,13 @@ public enum PeriodLengthUnit {
     }
 
     public static String now() {
-        return LocalDateTime.now().format(rfc3339Formatter);
+        return OffsetDateTime.now().format(rfc3339Formatter);
     }
 
     public String getLabel() {
         return label;
     }
 
-    public abstract String goBackInTime(LocalDateTime dateTime, long amount);
+    public abstract String goBackInTime(OffsetDateTime dateTime, long amount);
 
 }

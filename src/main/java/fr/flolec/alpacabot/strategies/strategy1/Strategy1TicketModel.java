@@ -1,6 +1,5 @@
 package fr.flolec.alpacabot.strategies.strategy1;
 
-import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
 import lombok.Getter;
 import lombok.Setter;
 import org.bson.types.ObjectId;
@@ -31,6 +30,9 @@ public class Strategy1TicketModel {
 
     @Field("bought_quantity")
     private double boughtQuantity;
+
+    @Field("bought_quantity_after_fees")
+    private double boughtQuantityAfterFees;
 
     @Field("average_filled_buy_price")
     private double averageFilledBuyPrice;

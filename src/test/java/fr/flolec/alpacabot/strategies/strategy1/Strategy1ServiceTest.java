@@ -5,6 +5,9 @@ import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderSide;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.TimeInForce;
+import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionModel;
+import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionService;
+import fr.flolec.alpacabot.alpacaapi.websocket.AlpacaWebSocketListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +41,12 @@ class Strategy1ServiceTest {
     private Strategy1OpportunityChecker strategy1OpportunityChecker;
 
     @Mock
+    private PositionService positionService;
+
+    @Mock
+    private AlpacaWebSocketListener alpacaWebSocketListener;
+
+    @Mock
     private Logger logger;
 
     @Spy
@@ -56,11 +65,31 @@ class Strategy1ServiceTest {
     void checkBuyOpportunitiesAndBuy() throws IOException {
         when(strategy1OpportunityChecker.checkBuyOpportunities()).thenReturn(List.of(asset1, asset2));
         doNothing().when(strategy1Service).createBuyOrder(any());
+        doNothing().when(strategy1Service).processUntreatedMessages();
 
         strategy1Service.checkBuyOpportunitiesAndBuy();
 
         verify(strategy1Service, times(1)).createBuyOrder(asset1);
         verify(strategy1Service, times(1)).createBuyOrder(asset2);
+        verify(strategy1Service, times(1)).processUntreatedMessages();
+    }
+
+    @Test
+    @DisplayName("Process untreated messages")
+    void processUntreatedMessages() {
+        when(alpacaWebSocketListener.getUntreatedMessages()).thenReturn(List.of("message1", "message2"));
+        when(orderService.messageToOrder("message1")).thenReturn(new OrderModel());
+        when(orderService.messageToOrder("message2")).thenReturn(new OrderModel());
+        doNothing().when(strategy1Service).processFilledOrder(any());
+
+        strategy1Service.processUntreatedMessages();
+
+        verify(logger, times(1)).info("Processing filled order message: {}", "message1");
+        verify(logger, times(1)).info("Processing filled order message: {}", "message2");
+        verify(orderService, times(1)).messageToOrder("message1");
+        verify(orderService, times(1)).messageToOrder("message2");
+        verify(strategy1Service, times(2)).processFilledOrder(any());
+        verify(alpacaWebSocketListener, times(1)).clearMessages();
     }
 
     @Test
@@ -114,6 +143,7 @@ class Strategy1ServiceTest {
         Strategy1TicketModel ticket = new Strategy1TicketModel();
         ticket.setSymbol("BTC/USD");
         ticket.setBoughtQuantity(32);
+        ticket.setBoughtQuantityAfterFees(31);
         ticket.setAverageFilledBuyPrice(100);
 
         OrderModel sellOrder = new OrderModel();
@@ -126,7 +156,7 @@ class Strategy1ServiceTest {
         assertEquals(Strategy1TicketStatus.SELL_UNFILLED, ticket.getStatus());
         verify(orderService, times(1)).createLimitQuantityOrder(
                 "BTC/USD",
-                "32.0",
+                "31.0",
                 OrderSide.SELL,
                 TimeInForce.GTC,
                 "102.0");
@@ -140,6 +170,7 @@ class Strategy1ServiceTest {
         Strategy1TicketModel ticket = new Strategy1TicketModel();
         ticket.setSymbol("BTC/USD");
         ticket.setBoughtQuantity(32);
+        ticket.setBoughtQuantityAfterFees(31);
         ticket.setAverageFilledBuyPrice(100);
 
         doThrow(new IOException("error message")).when(orderService).createLimitQuantityOrder(any(), any(), any(), any(), any());
@@ -148,7 +179,7 @@ class Strategy1ServiceTest {
 
         verify(orderService, times(1)).createLimitQuantityOrder(
                 "BTC/USD",
-                "32.0",
+                "31.0",
                 OrderSide.SELL,
                 TimeInForce.GTC,
                 "102.0");
@@ -189,7 +220,7 @@ class Strategy1ServiceTest {
 
     @Test
     @DisplayName("Process filled buy order - nominal")
-    void processFilledBuyOrder() {
+    void processFilledBuyOrder() throws IOException {
         OrderModel order = new OrderModel();
         order.setSide("buy");
         order.setStatus("filled");
@@ -201,7 +232,11 @@ class Strategy1ServiceTest {
         Strategy1TicketModel ticket = new Strategy1TicketModel();
         ticket.setStatus(Strategy1TicketStatus.BUY_UNFILLED);
 
+        PositionModel positionModel = new PositionModel();
+        positionModel.setQuantityAvailable("10");
+
         when(strategy1TicketRepository.findByOrder("buyOrderId")).thenReturn(ticket);
+        when(positionService.getAnOpenPosition(any())).thenReturn(positionModel);
         doNothing().when(strategy1Service).createSellOrder(any());
 
         strategy1Service.processFilledBuyOrder(order);
@@ -240,6 +275,26 @@ class Strategy1ServiceTest {
         strategy1Service.processFilledBuyOrder(order);
 
         verify(logger, times(1)).error("Trying to process a filled buy order which ticket was not \"BUY_UNFILLED\" but {}", Strategy1TicketStatus.SELL_UNFILLED);
+        verify(strategy1Service, times(0)).createSellOrder(any());
+    }
+
+    @Test
+    @DisplayName("Process filled buy order - sellable quantity not retrieved")
+    void processFilledBuyOrderSellableQuantityNotRetrieved() throws IOException {
+        OrderModel order = new OrderModel();
+        order.setSymbol("BTC/USD");
+        order.setId("buyOrderId");
+
+        Strategy1TicketModel ticket = new Strategy1TicketModel();
+        ticket.setStatus(Strategy1TicketStatus.BUY_UNFILLED);
+        ticket.setSymbol("BTC/USD");
+
+        when(strategy1TicketRepository.findByOrder("buyOrderId")).thenReturn(ticket);
+        when(positionService.getAnOpenPosition("BTC/USD")).thenThrow(new IOException("error message"));
+
+        strategy1Service.processFilledBuyOrder(order);
+
+        verify(logger, times(1)).error("Failed to retrieve the available quantity of asset {}: {}", "BTC/USD", "error message");
         verify(strategy1Service, times(0)).createSellOrder(any());
     }
 
