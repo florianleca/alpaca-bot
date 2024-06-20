@@ -61,10 +61,10 @@ class Strategy1OpportunityCheckerTest {
 
     @BeforeEach
     void setUp() {
-        asset1.setName("asset1");
-        asset2.setName("asset2");
-        asset3.setName("asset3");
-        asset4.setName("asset4");
+        asset1.setSymbol("ASSET1/TEST");
+        asset2.setSymbol("ASSET2/TEST");
+        asset3.setSymbol("ASSET3/TEST");
+        asset4.setSymbol("ASSET4/TEST");
         strategy1OpportunityChecker.setThreshold(2);
         strategy1OpportunityChecker.setPreviouslyBoughtPercentage(10);
         strategy1OpportunityChecker.setBarTimeFrameLabel(barTimeFrameLabel);
@@ -173,11 +173,10 @@ class Strategy1OpportunityCheckerTest {
         strategy1OpportunityChecker.logAssetThresholdState(asset1, 2.5, 100.);
 
         verify(logger, times(1)).info(
-                "[{}📉 {}%] {} ({}): [Highest: ${}] [Latest: {}$]",
+                "[{}📉 {}%] {}: [Highest: ${}] [Latest: {}$]",
                 "🟢",
                 "2.50",
-                "asset1",
-                null,
+                "ASSET1/TEST",
                 100.0d,
                 0.0d
         );
@@ -189,11 +188,10 @@ class Strategy1OpportunityCheckerTest {
         strategy1OpportunityChecker.logAssetThresholdState(asset1, 1.5, 100.);
 
         verify(logger, times(1)).info(
-                "[{}📉 {}%] {} ({}): [Highest: ${}] [Latest: {}$]",
+                "[{}📉 {}%] {}: [Highest: ${}] [Latest: {}$]",
                 "🔴",
                 "1.50",
-                "asset1",
-                null,
+                "ASSET1/TEST",
                 100.0d,
                 0.0d
         );
@@ -240,7 +238,7 @@ class Strategy1OpportunityCheckerTest {
         assertTrue(checkAssetUncompletedTickets);
         verify(logger, times(1)).info(
                 "🟢 Min value of {} tickets in DB is high enough ({}) compared to current value ({})",
-                null,
+                "ASSET1/TEST",
                 100.0d,
                 90.0d
         );
@@ -261,7 +259,7 @@ class Strategy1OpportunityCheckerTest {
         assertFalse(checkAssetUncompletedTickets);
         verify(logger, times(1)).info(
                 "🔴 Min value of {} tickets in DB is NOT high enough ({}) compared to current value ({})",
-                null,
+                "ASSET1/TEST",
                 100.0d,
                 91.0d
         );

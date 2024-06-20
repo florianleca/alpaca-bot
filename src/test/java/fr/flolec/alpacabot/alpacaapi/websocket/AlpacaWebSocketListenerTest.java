@@ -52,22 +52,19 @@ public class AlpacaWebSocketListenerTest {
     @Test
     void onMessageText() {
         alpacaWebSocketListener.onMessage(webSocket, messageText);
-        verify(logger).info("Received message: {}", messageText);
+        verify(logger).warn("Received message as text, which is not supported: {}", messageText);
     }
 
     @Test
     void onBadMessageBytes() {
         String badMessage = "toto";
         alpacaWebSocketListener.onMessage(webSocket, ByteString.encodeUtf8(badMessage));
-        verify(logger).info("Received bytes: {}", badMessage);
         verify(orderService, times(0)).messageToOrder(badMessage);
     }
 
     @Test
     void onGoodMessageBytes() {
         alpacaWebSocketListener.onMessage(webSocket, ByteString.encodeUtf8(messageText));
-
-        verify(logger).info("Received bytes: {}", messageText);
         assertTrue(alpacaWebSocketListener.getUntreatedMessages().contains(messageText));
     }
 
