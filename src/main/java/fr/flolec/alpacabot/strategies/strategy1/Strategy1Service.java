@@ -73,6 +73,10 @@ public class Strategy1Service {
                     String.valueOf(notional),
                     OrderSide.BUY,
                     TimeInForce.GTC);
+            if (buyOrder == null) {
+                logger.error("Failed to buy some {}", asset.getSymbol());
+                return;
+            }
             Strategy1TicketModel ticket = new Strategy1TicketModel();
             ticket.setSymbol(asset.getSymbol());
             ticket.setBuyOrderId(buyOrder.getId());
@@ -91,6 +95,10 @@ public class Strategy1Service {
                     OrderSide.SELL,
                     TimeInForce.GTC,
                     String.valueOf(ticket.getAverageFilledBuyPrice() * (1 + (gainPercentage / 100))));
+            if (sellOrder == null) {
+                logger.error("Failed to create a sell order for {} ticket", ticket.getSymbol());
+                return;
+            }
             ticket.setSellOrderId(sellOrder.getId());
             ticket.setStatus(Strategy1TicketStatus.SELL_UNFILLED);
             strategy1TicketRepository.save(ticket);
