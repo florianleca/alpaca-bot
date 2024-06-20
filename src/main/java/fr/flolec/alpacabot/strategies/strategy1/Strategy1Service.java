@@ -6,7 +6,6 @@ import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderService;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderSide;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.TimeInForce;
 import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionService;
-import fr.flolec.alpacabot.alpacaapi.websocket.AlpacaWebSocketListener;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +24,6 @@ public class Strategy1Service {
     private final OrderService orderService;
     private final Strategy1TicketRepository strategy1TicketRepository;
     private final Strategy1OpportunityChecker strategy1OpportunityChecker;
-    private final AlpacaWebSocketListener alpacaWebSocketListener;
     private final PositionService positionService;
     private Logger logger = LoggerFactory.getLogger(Strategy1Service.class);
 
@@ -39,30 +37,18 @@ public class Strategy1Service {
     public Strategy1Service(OrderService orderService,
                             Strategy1TicketRepository strategy1TicketRepository,
                             Strategy1OpportunityChecker strategy1OpportunityChecker,
-                            AlpacaWebSocketListener alpacaWebSocketListener,
                             PositionService positionService) {
         this.orderService = orderService;
         this.strategy1TicketRepository = strategy1TicketRepository;
         this.strategy1OpportunityChecker = strategy1OpportunityChecker;
-        this.alpacaWebSocketListener = alpacaWebSocketListener;
         this.positionService = positionService;
     }
 
     @Scheduled(cron = "${STRATEGY_1_CRON}")
     public void checkBuyOpportunitiesAndBuy() throws IOException {
+        updateUncompletedTickets();
         List<AssetModel> assets = strategy1OpportunityChecker.checkBuyOpportunities();
         assets.forEach(this::createBuyOrder);
-        processUntreatedMessages();
-    }
-
-    public void processUntreatedMessages() {
-        List<String> untreatedMessages = alpacaWebSocketListener.getUntreatedMessages();
-        untreatedMessages.forEach(message -> {
-            logger.info("Processing filled order message: {}", message);
-            OrderModel order = orderService.messageToOrder(message);
-            processFilledOrder(order);
-        });
-        alpacaWebSocketListener.clearMessages();
     }
 
     public void createBuyOrder(AssetModel asset) {
@@ -108,10 +94,40 @@ public class Strategy1Service {
         }
     }
 
-    public void processFilledOrder(OrderModel order) {
-        switch (order.getSide()) {
-            case "buy" -> processFilledBuyOrder(order);
-            case "sell" -> processFilledSellOrder(order);
+    //@Scheduled(cron = "${STRATEGY_1_UPDATE_CRON}")
+    public void updateUncompletedTickets() {
+        logger.info("Updating tickets...");
+        List<Strategy1TicketModel> uncompletedTickets = strategy1TicketRepository.findUncompletedTickets();
+        uncompletedTickets.forEach(this::updateUncompletedTicket);
+        logger.info("Update done!");
+    }
+
+    public void updateUncompletedTicket(Strategy1TicketModel strategy1TicketModel) {
+        switch (strategy1TicketModel.getStatus()) {
+            case BUY_UNFILLED -> updateBuyUnfilledTicket(strategy1TicketModel);
+            case SELL_UNFILLED -> updateSellUnfilledTicket(strategy1TicketModel);
+        }
+    }
+
+    public void updateBuyUnfilledTicket(Strategy1TicketModel strategy1TicketModel) {
+        try {
+            OrderModel orderModel = orderService.getOrderById(strategy1TicketModel.getBuyOrderId());
+            if (orderModel.getStatus().equals("filled")) {
+                processFilledBuyOrder(orderModel);
+            }
+        } catch (IOException e) {
+            logger.error("Failed to retrieve buy order of ticket {}: {}", strategy1TicketModel.getId(), e.getMessage());
+        }
+    }
+
+    public void updateSellUnfilledTicket(Strategy1TicketModel strategy1TicketModel) {
+        try {
+            OrderModel orderModel = orderService.getOrderById(strategy1TicketModel.getSellOrderId());
+            if (orderModel.getStatus().equals("filled")) {
+                processFilledSellOrder(orderModel);
+            }
+        } catch (IOException e) {
+            logger.error("Failed to retrieve sell order of ticket {}: {}", strategy1TicketModel.getId(), e.getMessage());
         }
     }
 
@@ -158,43 +174,6 @@ public class Strategy1Service {
         ticket.setAverageFilledSellPrice(order.getFilledAvgPrice());
         strategy1TicketRepository.save(ticket);
         logger.info("This {} ticket is now completed!", ticket.getSymbol());
-    }
-
-    //@Scheduled(cron = "${STRATEGY_1_UPDATE_CRON}")
-    public void updateUncompletedTickets() {
-        logger.info("Updating tickets...");
-        List<Strategy1TicketModel> uncompletedTickets = strategy1TicketRepository.findUncompletedTickets();
-        uncompletedTickets.forEach(this::updateUncompletedTicket);
-        logger.info("Update done!");
-    }
-
-    public void updateUncompletedTicket(Strategy1TicketModel strategy1TicketModel) {
-        switch (strategy1TicketModel.getStatus()) {
-            case BUY_UNFILLED -> updateBuyUnfilledTicket(strategy1TicketModel);
-            case SELL_UNFILLED -> updateSellUnfilledTicket(strategy1TicketModel);
-        }
-    }
-
-    public void updateBuyUnfilledTicket(Strategy1TicketModel strategy1TicketModel) {
-        try {
-            OrderModel orderModel = orderService.getOrderById(strategy1TicketModel.getBuyOrderId());
-            if (orderModel.getStatus().equals("filled")) {
-                processFilledBuyOrder(orderModel);
-            }
-        } catch (IOException e) {
-            logger.error("Failed to retrieve buy order of ticket {}: {}", strategy1TicketModel.getId(), e.getMessage());
-        }
-    }
-
-    public void updateSellUnfilledTicket(Strategy1TicketModel strategy1TicketModel) {
-        try {
-            OrderModel orderModel = orderService.getOrderById(strategy1TicketModel.getSellOrderId());
-            if (orderModel.getStatus().equals("filled")) {
-                processFilledSellOrder(orderModel);
-            }
-        } catch (IOException e) {
-            logger.error("Failed to retrieve sell order of ticket {}: {}", strategy1TicketModel.getId(), e.getMessage());
-        }
     }
 
 }

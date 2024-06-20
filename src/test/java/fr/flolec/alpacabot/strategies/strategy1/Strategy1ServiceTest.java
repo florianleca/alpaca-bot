@@ -7,7 +7,6 @@ import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderSide;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.TimeInForce;
 import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionService;
-import fr.flolec.alpacabot.alpacaapi.websocket.AlpacaWebSocketListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,9 +43,6 @@ class Strategy1ServiceTest {
     private PositionService positionService;
 
     @Mock
-    private AlpacaWebSocketListener alpacaWebSocketListener;
-
-    @Mock
     private Logger logger;
 
     @Spy
@@ -65,31 +61,12 @@ class Strategy1ServiceTest {
     void checkBuyOpportunitiesAndBuy() throws IOException {
         when(strategy1OpportunityChecker.checkBuyOpportunities()).thenReturn(List.of(asset1, asset2));
         doNothing().when(strategy1Service).createBuyOrder(any());
-        doNothing().when(strategy1Service).processUntreatedMessages();
 
         strategy1Service.checkBuyOpportunitiesAndBuy();
 
+        verify(strategy1Service, times(1)).updateUncompletedTickets();
         verify(strategy1Service, times(1)).createBuyOrder(asset1);
         verify(strategy1Service, times(1)).createBuyOrder(asset2);
-        verify(strategy1Service, times(1)).processUntreatedMessages();
-    }
-
-    @Test
-    @DisplayName("Process untreated messages")
-    void processUntreatedMessages() {
-        when(alpacaWebSocketListener.getUntreatedMessages()).thenReturn(List.of("message1", "message2"));
-        when(orderService.messageToOrder("message1")).thenReturn(new OrderModel());
-        when(orderService.messageToOrder("message2")).thenReturn(new OrderModel());
-        doNothing().when(strategy1Service).processFilledOrder(any());
-
-        strategy1Service.processUntreatedMessages();
-
-        verify(logger, times(1)).info("Processing filled order message: {}", "message1");
-        verify(logger, times(1)).info("Processing filled order message: {}", "message2");
-        verify(orderService, times(1)).messageToOrder("message1");
-        verify(orderService, times(1)).messageToOrder("message2");
-        verify(strategy1Service, times(2)).processFilledOrder(any());
-        verify(alpacaWebSocketListener, times(1)).clearMessages();
     }
 
     @Test
@@ -228,34 +205,6 @@ class Strategy1ServiceTest {
                 "BTC/USD",
                 "error message"
         );
-    }
-
-    @Test
-    @DisplayName("Process filled order - buy")
-    void processFilledOrderBuy() {
-        OrderModel order = new OrderModel();
-        order.setSide("buy");
-
-        doNothing().when(strategy1Service).processFilledBuyOrder(order);
-
-        strategy1Service.processFilledOrder(order);
-
-        verify(strategy1Service, times(1)).processFilledBuyOrder(order);
-        verify(strategy1Service, times(0)).processFilledSellOrder(any());
-    }
-
-    @Test
-    @DisplayName("Process filled order - sell")
-    void processFilledOrderSell() {
-        OrderModel order = new OrderModel();
-        order.setSide("sell");
-
-        doNothing().when(strategy1Service).processFilledSellOrder(order);
-
-        strategy1Service.processFilledOrder(order);
-
-        verify(strategy1Service, times(1)).processFilledSellOrder(order);
-        verify(strategy1Service, times(0)).processFilledBuyOrder(any());
     }
 
     @Test
