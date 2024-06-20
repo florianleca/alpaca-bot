@@ -61,14 +61,13 @@ public class AlpacaWebSocketListener extends WebSocketListener {
 
     @Override
     public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
-        logger.info("Received message: {}", text);
+        logger.warn("Received message as text, which is not supported: {}", text);
     }
 
     @Override
     @Async
     public void onMessage(@NotNull WebSocket webSocket, ByteString bytes) {
         String message = bytes.utf8();
-        logger.info("Received bytes: {}", message);
         if (message.contains("\"event\":\"fill\"")) {
             untreatedMessages.add(message);
         }

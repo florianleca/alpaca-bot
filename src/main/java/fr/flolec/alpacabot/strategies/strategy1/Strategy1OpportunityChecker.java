@@ -59,6 +59,7 @@ public class Strategy1OpportunityChecker {
     }
 
     public List<AssetModel> removeAssetsUnderThreshold(List<AssetModel> assets) {
+        logger.info("[STRATEGY 1] [REMOVE OPPORTUNITIES UNDER THRESHOLD]");
         List<AssetModel> filteredAssets = new ArrayList<>();
         assets.forEach(asset -> {
             if (isAssetPriceLowEnough(asset)) filteredAssets.add(asset);
@@ -68,7 +69,6 @@ public class Strategy1OpportunityChecker {
     }
 
     public boolean isAssetPriceLowEnough(AssetModel asset) {
-        logger.info("Has {}'s price decreased enough to be bought?", asset.getName().split(" /")[0].trim());
         try {
             double assetLatestValue = latestQuoteService.getLatestQuote(asset);
             asset.setLatestValue(assetLatestValue);
@@ -108,16 +108,16 @@ public class Strategy1OpportunityChecker {
         } else {
             state = "🔴";
         }
-        logger.info("[{}📉 {}%] {} ({}): [Highest: ${}] [Latest: {}$]",
+        logger.info("[{}📉 {}%] {}: [Highest: ${}] [Latest: {}$]",
                 state,
                 decreasedPercentString,
-                asset.getName().split(" /")[0].trim(),
                 asset.getSymbol(),
                 maxHigh,
                 asset.getLatestValue());
     }
 
     public List<AssetModel> removeAssetsAlreadyBought(List<AssetModel> assets) {
+        logger.info("[STRATEGY 1] [REMOVE ALREADY BOUGHT OPPORTUNITIES]");
         List<AssetModel> filteredAssets = new ArrayList<>();
         assets.forEach(asset -> {
             if (checkAssetUncompletedTickets(asset)) filteredAssets.add(asset);
@@ -127,7 +127,6 @@ public class Strategy1OpportunityChecker {
     }
 
     public boolean checkAssetUncompletedTickets(AssetModel asset) {
-        logger.info("Do we already have uncompleted {} tickets with similar buying price?", asset.getName().split(" /")[0].trim());
         // pour chaque asset, récupérer la liste des uncompleted tickets de cet asset
         List<Strategy1TicketModel> tickets = strategy1TicketRepository.findUncompletedTickets(asset.getSymbol());
         // si la liste est vide : is ok
