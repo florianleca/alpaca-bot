@@ -113,6 +113,24 @@ class Strategy1ServiceTest {
     }
 
     @Test
+    @DisplayName("Create buy order - null order returned")
+    void createBuyOrderNullOrder() throws IOException {
+        asset1.setSymbol("BTC/USD");
+        when(orderService.createMarketNotionalOrder(any(), any(), any(), any())).thenReturn(null);
+
+        strategy1Service.createBuyOrder(asset1);
+
+        verify(logger, times(1)).info("Trying to buy some {}...", "BTC/USD");
+        verify(orderService, times(1)).createMarketNotionalOrder(
+                "BTC/USD",
+                "1.0",
+                OrderSide.BUY,
+                TimeInForce.GTC);
+        verify(logger, times(1)).error("Failed to buy some {}", "BTC/USD");
+        verify(strategy1TicketRepository, times(0)).save(any());
+    }
+
+    @Test
     @DisplayName("Create buy order - error")
     void createBuyOrderError() throws IOException {
         asset1.setSymbol("BTC/USD");
@@ -162,6 +180,28 @@ class Strategy1ServiceTest {
                 "102.0");
         verify(strategy1TicketRepository, times(1)).save(ticket);
         verify(logger, times(1)).info("Successfully created a SELL order for {} ticket", "BTC/USD");
+    }
+
+    @Test
+    @DisplayName("Create sell order - null order returned")
+    void createSellOrderNullOrder() throws IOException {
+        Strategy1TicketModel ticket = new Strategy1TicketModel();
+        ticket.setSymbol("BTC/USD");
+        ticket.setBoughtQuantityAfterFees(31);
+        ticket.setAverageFilledBuyPrice(100);
+
+        when(orderService.createLimitQuantityOrder(any(), any(), any(), any(), any())).thenReturn(null);
+
+        strategy1Service.createSellOrder(ticket);
+
+        verify(orderService, times(1)).createLimitQuantityOrder(
+                "BTC/USD",
+                "31.0",
+                OrderSide.SELL,
+                TimeInForce.GTC,
+                "102.0");
+        verify(logger, times(1)).error("Failed to create a sell order for {} ticket", "BTC/USD");
+        verify(strategy1TicketRepository, times(0)).save(any());
     }
 
     @Test
