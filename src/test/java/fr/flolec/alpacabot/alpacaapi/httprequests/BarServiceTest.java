@@ -1,7 +1,6 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests;
 
 import fr.flolec.alpacabot.WireMockedTest;
-import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarService;
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarTimeFrame;
@@ -43,10 +42,7 @@ class BarServiceTest extends WireMockedTest {
     @Test
     @DisplayName("Historical bars are retrieved and serialized correctly")
     void getHistoricalBars() throws IOException {
-        AssetModel assetModel = new AssetModel();
-        assetModel.setSymbol("AAVE/USD");
-
-        List<BarModel> barModels = barService.getHistoricalBars(assetModel, BarTimeFrame.DAY1, 1, PeriodLengthUnit.WEEK);
+        List<BarModel> barModels = barService.getHistoricalBars("AAVE/USD", BarTimeFrame.DAY1, 1, PeriodLengthUnit.WEEK);
 
         assertNotNull(barModels);
         assertEquals(7, barModels.size());
@@ -62,11 +58,7 @@ class BarServiceTest extends WireMockedTest {
     @Test
     @DisplayName("Max high on period is calculated correctly")
     void getMaxHighOnPeriod() throws IOException {
-        AssetModel assetModel = new AssetModel();
-        assetModel.setSymbol("AAVE/USD");
-
-        double maxHigh = barService.getMaxHighOnPeriod(assetModel, BarTimeFrame.DAY1, 1, PeriodLengthUnit.WEEK);
-
+        double maxHigh = barService.getMaxHighOnPeriod("AAVE/USD", BarTimeFrame.DAY1, 1, PeriodLengthUnit.WEEK);
         assertEquals(110.279, maxHigh);
     }
 

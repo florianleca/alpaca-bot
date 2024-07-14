@@ -106,8 +106,8 @@ class Strategy1OpportunityCheckerTest {
         when(latestQuoteService.getLatestQuote(asset1)).thenReturn(0.);
         when(latestQuoteService.getLatestQuote(asset2)).thenReturn(0.);
 
-        when(barService.getMaxHighOnPeriod(asset1, BarTimeFrame.fromLabel(barTimeFrameLabel), periodLength, PeriodLengthUnit.fromLabel(periodLengthUnitLabel))).thenReturn(0.);
-        when(barService.getMaxHighOnPeriod(asset2, BarTimeFrame.fromLabel(barTimeFrameLabel), periodLength, PeriodLengthUnit.fromLabel(periodLengthUnitLabel))).thenReturn(0.);
+        when(barService.getMaxHighOnPeriod(asset1.getSymbol(), BarTimeFrame.fromLabel(barTimeFrameLabel), periodLength, PeriodLengthUnit.fromLabel(periodLengthUnitLabel))).thenReturn(0.);
+        when(barService.getMaxHighOnPeriod(asset2.getSymbol(), BarTimeFrame.fromLabel(barTimeFrameLabel), periodLength, PeriodLengthUnit.fromLabel(periodLengthUnitLabel))).thenReturn(0.);
 
         doReturn(true).when(strategy1OpportunityChecker).decreasedMoreThanThreshold(asset1, 0., 0.);
         doReturn(false).when(strategy1OpportunityChecker).decreasedMoreThanThreshold(asset2, 0., 0.);

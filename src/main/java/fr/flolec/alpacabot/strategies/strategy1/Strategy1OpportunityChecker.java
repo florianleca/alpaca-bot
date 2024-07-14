@@ -72,7 +72,7 @@ public class Strategy1OpportunityChecker {
         try {
             double assetLatestValue = latestQuoteService.getLatestQuote(asset);
             asset.setLatestValue(assetLatestValue);
-            double maxHigh = barService.getMaxHighOnPeriod(asset, BarTimeFrame.fromLabel(barTimeFrameLabel), periodLength, PeriodLengthUnit.fromLabel(periodLengthUnitLabel));
+            double maxHigh = barService.getMaxHighOnPeriod(asset.getSymbol(), BarTimeFrame.fromLabel(barTimeFrameLabel), periodLength, PeriodLengthUnit.fromLabel(periodLengthUnitLabel));
             maxHigh = Math.max(maxHigh, assetLatestValue);
             if (decreasedMoreThanThreshold(asset, assetLatestValue, maxHigh)) {
                 return true;
