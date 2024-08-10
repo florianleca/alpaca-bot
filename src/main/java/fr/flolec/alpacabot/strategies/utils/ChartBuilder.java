@@ -26,6 +26,12 @@ import java.util.List;
 @Component
 public class ChartBuilder {
 
+    /**
+     * @param barSeries The bar series
+     * @param indicator The indicator to be added to the chart
+     * @param name      The name of displayed indicator
+     * @return          A time series containing the values of the indicator
+     */
     private static TimeSeries buildChartTimeSeries(BarSeries barSeries, Indicator<Num> indicator,
                                                    String name) {
         TimeSeries chartTimeSeries = new TimeSeries(name);
@@ -81,15 +87,15 @@ public class ChartBuilder {
         frame.setVisible(true);
     }
 
-    public void run(Strategy strategy, BarSeries series) {
+    public void run(Strategy strategy, BarSeries series, String assetSymbol) {
 
         //Building chart datasets
         TimeSeriesCollection dataset = new TimeSeriesCollection();
-        dataset.addSeries(buildChartTimeSeries(series, new ClosePriceIndicator(series), "Bitstamp Bitcoin (BTC)"));
+        dataset.addSeries(buildChartTimeSeries(series, new ClosePriceIndicator(series), assetSymbol + " close values"));
 
         //Creating the chart
         JFreeChart chart = ChartFactory.createTimeSeriesChart(
-                "Bitstamp BTC", // title
+                assetSymbol, // main title
                 "Date", // x-axis label
                 "Price", // y-axis label
                 dataset, // data
