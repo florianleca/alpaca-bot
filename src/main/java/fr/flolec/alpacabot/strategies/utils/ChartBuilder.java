@@ -87,6 +87,12 @@ public class ChartBuilder {
         frame.setVisible(true);
     }
 
+    /**
+     * System.setProperty("java.awt.headless", "false");
+     * BarSeries bars = barsUtils.getLastHourBars("BTC/USD", BarTimeFrame.HOUR1, 1, PeriodLengthUnit.WEEK);
+     * chartBuilder.run(strategy2Service.buildStrategy2(bars), bars, "BTC/USD");
+     * Thread.sleep(100000);
+     */
     public void run(Strategy strategy, BarSeries series, String assetSymbol) {
 
         //Building chart datasets

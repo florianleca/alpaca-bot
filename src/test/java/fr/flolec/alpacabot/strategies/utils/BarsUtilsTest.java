@@ -66,9 +66,11 @@ class BarsUtilsTest {
         Path csvFile = tempDir.resolve("output.csv");
         BarsUtils.barSeriesToCsvFile(barSeries, csvFile.toString());
 
-        String expectedContent = "Date,Open,High,Low,Close,Volume\n" +
-                        "2021-01-01T00:00:00+0000,1.0,2.0,0.5,1.5,1000.0\n" +
-                        "2021-01-01T01:00:00+0000,1.1,2.1,0.6,1.6,1100.0\n";
+        String expectedContent = """
+                Date,Open,High,Low,Close,Volume
+                2021-01-01T00:00:00+0000,1.0,2.0,0.5,1.5,1000.0
+                2021-01-01T01:00:00+0000,1.1,2.1,0.6,1.6,1100.0
+                """;
 
         String actualContent = Files.readString(csvFile);
         assertEquals(expectedContent, actualContent);
