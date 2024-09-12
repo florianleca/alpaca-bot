@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 public class BarsUtils {
@@ -57,20 +58,19 @@ public class BarsUtils {
         BarSeries series = new BaseBarSeries();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ");
 
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            br.readLine();
-            String line;  // Ignore header
-            while ((line = br.readLine()) != null) {
-                String[] values = line.split(",");
-                ZonedDateTime date = ZonedDateTime.parse(values[0], formatter);
-                double open = Double.parseDouble(values[1]);
-                double high = Double.parseDouble(values[2]);
-                double low = Double.parseDouble(values[3]);
-                double close = Double.parseDouble(values[4]);
-                double volume = Double.parseDouble(values[5]);
-                series.addBar(new BaseBar(Duration.ofHours(1), date, open, high, low, close, volume));
-            }
-        }
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
+        Stream<String> lines = reader.lines().skip(1);
+        lines.forEachOrdered(line -> {
+            String[] values = line.split(",");
+            ZonedDateTime date = ZonedDateTime.parse(values[0], formatter);
+            double open = Double.parseDouble(values[1]);
+            double high = Double.parseDouble(values[2]);
+            double low = Double.parseDouble(values[3]);
+            double close = Double.parseDouble(values[4]);
+            double volume = Double.parseDouble(values[5]);
+            series.addBar(new BaseBar(Duration.ofHours(1), date, open, high, low, close, volume));
+        });
+        reader.close();
         return series;
     }
 
