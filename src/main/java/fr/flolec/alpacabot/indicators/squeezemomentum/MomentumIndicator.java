@@ -1,5 +1,7 @@
-package fr.flolec.alpacabot.indicators;
+package fr.flolec.alpacabot.indicators.squeezemomentum;
 
+import fr.flolec.alpacabot.indicators.utils.AverageIndicator;
+import fr.flolec.alpacabot.indicators.utils.DifferenceIndicator;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.indicators.CachedIndicator;
 import org.ta4j.core.indicators.SMAIndicator;
@@ -12,7 +14,7 @@ public class MomentumIndicator extends CachedIndicator<Num> {
     private final BarSeries series;
     private final int lengthKC;
 
-    protected MomentumIndicator(BarSeries series, int lengthKC) {
+    public MomentumIndicator(BarSeries series, int lengthKC) {
         super(series);
         this.series = series;
         this.lengthKC = lengthKC;
@@ -20,6 +22,9 @@ public class MomentumIndicator extends CachedIndicator<Num> {
 
     @Override
     protected Num calculate(int i) {
+
+        if (i < getUnstableBars()) return null;
+
         // val = linreg(source  -  avg(avg(highest(high, lengthKC), lowest(low, lengthKC)), sma(close, lengthKC)), lengthKC, 0)
 
         // val = linreg(source  -  avg(avg(highPrice, lowPrice), sma(close, lengthKC)), lengthKC, 0)
@@ -42,7 +47,7 @@ public class MomentumIndicator extends CachedIndicator<Num> {
 
     @Override
     public int getUnstableBars() {
-        return this.lengthKC;
+        return 2 * this.lengthKC;
     }
 
 }

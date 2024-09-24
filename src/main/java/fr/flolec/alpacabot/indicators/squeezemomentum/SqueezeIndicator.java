@@ -1,5 +1,6 @@
-package fr.flolec.alpacabot.indicators;
+package fr.flolec.alpacabot.indicators.squeezemomentum;
 
+import jakarta.annotation.Nullable;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.indicators.CachedIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandFacade;
@@ -19,7 +20,10 @@ public class SqueezeIndicator extends CachedIndicator<Boolean> {
     }
 
     @Override
+    @Nullable
     public Boolean calculate(int index) {
+        if (index < getUnstableBars()) return null;
+
         double lowerBB = bollingerBandFacade.lower().getValue(index).doubleValue();
         double upperBB = bollingerBandFacade.upper().getValue(index).doubleValue();
         double lowerKC = keltnerChannelFacade.lower().getValue(index).doubleValue();

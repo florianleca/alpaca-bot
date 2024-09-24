@@ -14,7 +14,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 @Component
 public class AssetService {
@@ -37,7 +38,7 @@ public class AssetService {
      * @throws IOException If an I/O error occurs while fetching or processing the data
      */
     public List<AssetModel> getAssetsList() throws IOException {
-        String url = Objects.requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
+        String url = requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
                 .addQueryParameter("status", "active")
                 .addQueryParameter("exchange", "CRYPTO")
                 .toString();

@@ -14,7 +14,8 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 
 @Component
@@ -43,23 +44,27 @@ public class BarService {
      * @throws IOException If an I/O error occurs while fetching or processing the data
      */
     public List<BarModel> getHistoricalBars(String assetSymbol, BarTimeFrame barTimeFrame, long periodLength, PeriodLengthUnit periodLengthUnit) throws IOException {
-        String url = Objects.requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
-                .addQueryParameter("symbols", assetSymbol)
-                .addQueryParameter("timeframe", barTimeFrame.getLabel())
-                .addQueryParameter("start", periodLengthUnit.goBackInTime(OffsetDateTime.now(), periodLength))
-                //.addQueryParameter("end", PeriodLengthUnit.now()) TODO: tester pour voir si c'était vraiment facultatif
-                .toString();
-        Response response = httpRequestService.get(url);
-        assert response.body() != null;
-        JsonNode jsonNode = objectMapper.readTree(response.body().string()).path("bars").path(assetSymbol);
-        return objectMapper.treeToValue(jsonNode, new TypeReference<ArrayList<BarModel>>() {
-        });
-    }
+        List<BarModel> bars = new ArrayList<>();
+        String nextPageToken = "";
 
+        do {
+            String url = requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
+                    .addQueryParameter("symbols", assetSymbol)
+                    .addQueryParameter("timeframe", barTimeFrame.getLabel())
+                    .addQueryParameter("start", periodLengthUnit.goBackInTime(OffsetDateTime.now(), periodLength))
+                    .addQueryParameter("page_token", nextPageToken)
+                    .toString();
 
-    public double getMaxHighOnPeriod(String assetSymbol, BarTimeFrame barTimeFrame, long periodLength, PeriodLengthUnit periodLengthUnit) throws IOException {
-        List<BarModel> bars = getHistoricalBars(assetSymbol, barTimeFrame, periodLength, periodLengthUnit);
-        return bars.stream().mapToDouble(BarModel::getHigh).max().orElse(-1);
+            Response response = httpRequestService.get(url);
+            if (response.body() == null) throw new IOException("Response body is null");
+            String responseString = response.body().string();
+            JsonNode jsonNode = objectMapper.readTree(responseString).path("bars").path(assetSymbol);
+            bars.addAll(objectMapper.treeToValue(jsonNode, new TypeReference<ArrayList<BarModel>>() {
+            }));
+            nextPageToken = objectMapper.readTree(responseString).path("next_page_token").asText();
+        } while (!nextPageToken.equals("null"));
+
+        return bars;
     }
 
 }

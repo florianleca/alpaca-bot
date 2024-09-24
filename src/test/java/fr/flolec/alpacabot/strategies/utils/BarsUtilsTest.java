@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -78,19 +79,27 @@ class BarsUtilsTest {
 
     @Test
     void csvFileToBarSeries() throws IOException {
-        BarSeries barSeries = BarsUtils.csvFileToBarSeries("src/test/resources/bars.csv");
-        assertEquals(168, barSeries.getBarCount());
-        assertEquals(69003.229, barSeries.getBar(0).getOpenPrice().doubleValue());
-        assertEquals(69098.795, barSeries.getBar(0).getHighPrice().doubleValue());
-        assertEquals(68604.108, barSeries.getBar(0).getLowPrice().doubleValue());
-        assertEquals(68837.215, barSeries.getBar(0).getClosePrice().doubleValue());
-        assertEquals(1.131637121, barSeries.getBar(0).getVolume().doubleValue());
+        BarSeries barSeries = BarsUtils.csvFileToBarSeries("src/test/resources/BTCUSDT-1m-2024-09-21.csv", Duration.ofMinutes(1));
+        assertEquals(1440, barSeries.getBarCount());
 
-        assertEquals("2024-07-27T14:00Z", barSeries.getFirstBar().getBeginTime().toString());
-        assertEquals("2024-07-27T15:00Z", barSeries.getFirstBar().getEndTime().toString());
+        Bar firstBar = barSeries.getFirstBar();
+        Bar lastBar = barSeries.getLastBar();
 
-        assertEquals("2024-08-03T13:00Z", barSeries.getLastBar().getBeginTime().toString());
-        assertEquals("2024-08-03T14:00Z", barSeries.getLastBar().getEndTime().toString());
+        assertEquals(63201.05000000, firstBar.getOpenPrice().doubleValue());
+        assertEquals(63201.06000000, firstBar.getHighPrice().doubleValue());
+        assertEquals(63186.00000000, firstBar.getLowPrice().doubleValue());
+        assertEquals(63196.00000000, firstBar.getClosePrice().doubleValue());
+        assertEquals(10.91101000, firstBar.getVolume().doubleValue());
+
+        // 1726876800000L = 2024-09-21T00:00:00Z
+        assertEquals(Instant.ofEpochMilli(1726876800000L), firstBar.getBeginTime().toInstant());
+        // 1726876860000L = 2024-09-21T00:01:00Z
+        assertEquals(Instant.ofEpochMilli(1726876860000L), firstBar.getEndTime().toInstant());
+
+        // 1726963140000L = 2024-09-21T23:59:00Z
+        assertEquals(Instant.ofEpochMilli(1726963140000L), lastBar.getBeginTime().toInstant());
+        // 1726963200000L = 2024-09-22T00:00:00Z
+        assertEquals(Instant.ofEpochMilli(1726963200000L), lastBar.getEndTime().toInstant());
     }
 
 }

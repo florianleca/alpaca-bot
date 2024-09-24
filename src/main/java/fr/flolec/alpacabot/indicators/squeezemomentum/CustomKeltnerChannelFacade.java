@@ -1,4 +1,4 @@
-package fr.flolec.alpacabot.indicators;
+package fr.flolec.alpacabot.indicators.squeezemomentum;
 
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;

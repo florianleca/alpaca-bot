@@ -16,10 +16,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Component
 public class BarsUtils {
@@ -54,21 +55,19 @@ public class BarsUtils {
         }
     }
 
-    public static BarSeries csvFileToBarSeries(String filePath) throws IOException {
+    public static BarSeries csvFileToBarSeries(String filePath, Duration duration) throws IOException {
         BarSeries series = new BaseBarSeries();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ");
-
         BufferedReader reader = new BufferedReader(new FileReader(filePath));
-        Stream<String> lines = reader.lines().skip(1);
-        lines.forEachOrdered(line -> {
+        reader.lines().forEachOrdered(line -> {
             String[] values = line.split(",");
-            ZonedDateTime date = ZonedDateTime.parse(values[0], formatter);
             double open = Double.parseDouble(values[1]);
             double high = Double.parseDouble(values[2]);
             double low = Double.parseDouble(values[3]);
             double close = Double.parseDouble(values[4]);
             double volume = Double.parseDouble(values[5]);
-            series.addBar(new BaseBar(Duration.ofHours(1), date, open, high, low, close, volume));
+            ZonedDateTime endTime = Instant.ofEpochMilli(Long.parseLong(values[6]) + 1)
+                    .atZone(ZoneId.of("UTC"));
+            series.addBar(new BaseBar(duration, endTime, open, high, low, close, volume));
         });
         reader.close();
         return series;
