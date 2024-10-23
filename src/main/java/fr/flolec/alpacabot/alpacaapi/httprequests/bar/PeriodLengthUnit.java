@@ -1,8 +1,11 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests.bar;
 
+import lombok.Getter;
+
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
+@Getter
 public enum PeriodLengthUnit {
 
     MIN("Min") {
@@ -37,6 +40,7 @@ public enum PeriodLengthUnit {
     };
 
     public static final DateTimeFormatter rfc3339Formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+
     public final String label;
 
     PeriodLengthUnit(String label) {
@@ -50,14 +54,6 @@ public enum PeriodLengthUnit {
             }
         }
         throw new IllegalArgumentException("No matching constant for " + label);
-    }
-
-    public static String now() {
-        return OffsetDateTime.now().format(rfc3339Formatter);
-    }
-
-    public String getLabel() {
-        return label;
     }
 
     public abstract String goBackInTime(OffsetDateTime dateTime, long amount);

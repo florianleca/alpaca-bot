@@ -11,7 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 @Component
 public class LatestQuoteService {
@@ -34,7 +35,7 @@ public class LatestQuoteService {
     }
 
     public double getLatestQuote(String symbol) throws IOException {
-        String url = Objects.requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
+        String url = requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
                 .addQueryParameter("symbols", symbol)
                 .toString();
         Response response = httpRequestService.get(url);

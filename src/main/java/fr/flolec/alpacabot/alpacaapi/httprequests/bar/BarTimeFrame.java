@@ -1,5 +1,8 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests.bar;
 
+import lombok.Getter;
+
+@Getter
 public enum BarTimeFrame {
 
     MIN1("1Min"),
@@ -106,10 +109,6 @@ public enum BarTimeFrame {
             }
         }
         throw new IllegalArgumentException("No matching constant for " + label);
-    }
-
-    public String getLabel() {
-        return this.label;
     }
 
 }

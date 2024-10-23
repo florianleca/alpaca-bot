@@ -18,9 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static java.util.Objects.requireNonNull;
+
 @Component
 public class PositionService {
 
+    public static final String MESSAGE = "message";
     private final String endpoint;
     private final ObjectMapper objectMapper;
     private final HttpRequestService httpRequestService;
@@ -49,21 +52,21 @@ public class PositionService {
         assert response.body() != null;
 
         if (!response.isSuccessful()) {
-            String errorMessage = objectMapper.readTree(response.body().string()).get("message").asText();
+            String errorMessage = objectMapper.readTree(response.body().string()).get(MESSAGE).asText();
             logger.warn("Position couldn't be retrieved: '{}' (code {})", errorMessage, response.code());
             return null;
         }
 
         String bodyString = response.body().string();
-        System.out.println(bodyString);
         JsonNode jsonNode = objectMapper.readTree(bodyString);
         return objectMapper.treeToValue(jsonNode, PositionModel.class);
     }
 
     public List<PositionModel> getAllOpenPositions() throws IOException {
         Response response = httpRequestService.get(endpoint);
+        assert response.body() != null;
         JsonNode jsonNode = objectMapper.readTree(response.body().string());
-        return objectMapper.treeToValue(jsonNode, new TypeReference<ArrayList<PositionModel>>() {
+        return objectMapper.treeToValue(jsonNode, new TypeReference<>() {
         });
     }
 
@@ -77,7 +80,7 @@ public class PositionService {
     // Liquidate = sell order at market price
     public OrderModel liquidatePositionByPercentage(String symbol, double percentage) throws IOException {
         symbol = takeSlashOutOfSymbol(symbol);
-        String url = HttpUrl.parse(endpoint + "/" + symbol).newBuilder()
+        String url = requireNonNull(HttpUrl.parse(endpoint + "/" + symbol)).newBuilder()
                 .addQueryParameter("percentage", String.format(Locale.US, "%.9f", percentage))
                 .toString();
         return liquidatePosition(url);
@@ -85,7 +88,7 @@ public class PositionService {
 
     public OrderModel liquidatePositionByQuantity(String symbol, double coinQuantity) throws IOException {
         symbol = takeSlashOutOfSymbol(symbol);
-        String url = HttpUrl.parse(endpoint + "/" + symbol).newBuilder()
+        String url = requireNonNull(HttpUrl.parse(endpoint + "/" + symbol)).newBuilder()
                 .addQueryParameter("qty", String.format(Locale.US, "%.9f", coinQuantity))
                 .toString();
         return liquidatePosition(url);
@@ -98,7 +101,7 @@ public class PositionService {
         assert response.body() != null;
 
         if (!response.isSuccessful()) {
-            String errorMessage = objectMapper.readTree(response.body().string()).get("message").asText();
+            String errorMessage = objectMapper.readTree(response.body().string()).get(MESSAGE).asText();
             logger.warn("Position couldn't be liquidated: '{}' (code {})", errorMessage, response.code());
             return null;
         }
@@ -110,16 +113,16 @@ public class PositionService {
 
     public List<OrderModel> liquidateAllPositions() throws IOException {
         Response response;
-        String url = HttpUrl.parse(endpoint).newBuilder()
+        String url = requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
                 .addQueryParameter("cancel_orders", "true")
                 .toString();
         response = httpRequestService.delete(url);
         assert response.body() != null;
 
         if (!response.isSuccessful()) {
-            String errorMessage = objectMapper.readTree(response.body().string()).get("message").asText();
+            String errorMessage = objectMapper.readTree(response.body().string()).get(MESSAGE).asText();
             logger.warn("Positions couldn't be liquidated: '{}' (code {})", errorMessage, response.code());
-            return null;
+            return new ArrayList<>();
         }
         JsonNode jsonNode = objectMapper.readTree(response.body().string());
         List<OrderModel> orderModels = new ArrayList<>();

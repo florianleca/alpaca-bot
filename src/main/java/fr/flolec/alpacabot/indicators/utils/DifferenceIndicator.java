@@ -1,0 +1,29 @@
+package fr.flolec.alpacabot.indicators.utils;
+
+import org.ta4j.core.Indicator;
+import org.ta4j.core.indicators.CachedIndicator;
+import org.ta4j.core.num.Num;
+
+public class DifferenceIndicator extends CachedIndicator<Num> {
+
+    private final Indicator<Num> indicator1;
+    private final Indicator<Num> indicator2;
+
+    public DifferenceIndicator(Indicator<Num> indicator1, Indicator<Num> indicator2) {
+        super(indicator1);
+        this.indicator1 = indicator1;
+        this.indicator2 = indicator2;
+    }
+
+    @Override
+    protected Num calculate(int index) {
+        if (index < getUnstableBars()) return null;
+        return indicator1.getValue(index).minus(indicator2.getValue(index));
+    }
+
+    @Override
+    public int getUnstableBars() {
+        return Math.max(indicator1.getUnstableBars(), indicator2.getUnstableBars());
+    }
+
+}

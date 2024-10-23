@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.flolec.alpacabot.alpacaapi.httprequests.HttpRequestService;
-import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetModel;
 import okhttp3.HttpUrl;
 import okhttp3.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +14,8 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 
 @Component
@@ -36,31 +36,35 @@ public class BarService {
 
 
     /**
-     * @param asset            The asset of which we want to retrieve the bars
+     * @param assetSymbol      The asset of which we want to retrieve the bars
      * @param barTimeFrame     The time duration of a single bar (candle)
      * @param periodLength     How long should be the history period
      * @param periodLengthUnit Unit of the history period
      * @return A list of bars of the given asset for the given history period
      * @throws IOException If an I/O error occurs while fetching or processing the data
      */
-    public List<BarModel> getHistoricalBars(AssetModel asset, BarTimeFrame barTimeFrame, long periodLength, PeriodLengthUnit periodLengthUnit) throws IOException {
-        String url = Objects.requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
-                .addQueryParameter("symbols", asset.getSymbol())
-                .addQueryParameter("timeframe", barTimeFrame.getLabel())
-                .addQueryParameter("start", periodLengthUnit.goBackInTime(OffsetDateTime.now(), periodLength))
-                .addQueryParameter("end", PeriodLengthUnit.now())
-                .toString();
-        Response response = httpRequestService.get(url);
-        assert response.body() != null;
-        JsonNode jsonNode = objectMapper.readTree(response.body().string()).path("bars").path(asset.getSymbol());
-        return objectMapper.treeToValue(jsonNode, new TypeReference<ArrayList<BarModel>>() {
-        });
-    }
+    public List<BarModel> getHistoricalBars(String assetSymbol, BarTimeFrame barTimeFrame, long periodLength, PeriodLengthUnit periodLengthUnit) throws IOException {
+        List<BarModel> bars = new ArrayList<>();
+        String nextPageToken = "";
 
+        do {
+            String url = requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
+                    .addQueryParameter("symbols", assetSymbol)
+                    .addQueryParameter("timeframe", barTimeFrame.getLabel())
+                    .addQueryParameter("start", periodLengthUnit.goBackInTime(OffsetDateTime.now(), periodLength))
+                    .addQueryParameter("page_token", nextPageToken)
+                    .toString();
 
-    public double getMaxHighOnPeriod(AssetModel asset, BarTimeFrame barTimeFrame, long periodLength, PeriodLengthUnit periodLengthUnit) throws IOException {
-        List<BarModel> bars = getHistoricalBars(asset, barTimeFrame, periodLength, periodLengthUnit);
-        return bars.stream().mapToDouble(BarModel::getHigh).max().orElse(-1);
+            Response response = httpRequestService.get(url);
+            if (response.body() == null) throw new IOException("Response body is null");
+            String responseString = response.body().string();
+            JsonNode jsonNode = objectMapper.readTree(responseString).path("bars").path(assetSymbol);
+            bars.addAll(objectMapper.treeToValue(jsonNode, new TypeReference<ArrayList<BarModel>>() {
+            }));
+            nextPageToken = objectMapper.readTree(responseString).path("next_page_token").asText();
+        } while (!nextPageToken.equals("null"));
+
+        return bars;
     }
 
 }

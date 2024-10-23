@@ -8,8 +8,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 @WireMockTest(httpPort = 8080)
 public abstract class WireMockedTest {
 
-    protected ObjectMapper objectMapper;
-    protected HttpRequestService httpRequestService;
+    protected final ObjectMapper objectMapper;
+    protected final HttpRequestService httpRequestService;
 
     public WireMockedTest() {
         objectMapper = new ObjectMapper();
