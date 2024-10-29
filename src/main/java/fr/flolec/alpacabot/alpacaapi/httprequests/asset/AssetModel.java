@@ -4,12 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
 
 @Getter
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AssetModel implements Comparable<AssetModel> {
+public class AssetModel {
 
     @JsonProperty("id")
     private String id;
@@ -40,12 +39,5 @@ public class AssetModel implements Comparable<AssetModel> {
 
     @JsonProperty("price_increment")
     private String priceIncrement;
-
-    private double latestValue;
-
-    @Override
-    public int compareTo(@NotNull AssetModel o) {
-        return name.compareTo(o.getName());
-    }
 
 }

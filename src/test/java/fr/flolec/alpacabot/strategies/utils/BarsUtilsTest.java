@@ -1,16 +1,8 @@
 package fr.flolec.alpacabot.strategies.utils;
 
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarModel;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarService;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarTimeFrame;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.PeriodLengthUnit;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.BaseBar;
@@ -25,31 +17,21 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class BarsUtilsTest {
 
     @TempDir
     Path tempDir;
-    @Mock
-    private BarService barService;
-    @Spy
-    @InjectMocks
-    private BarsUtils barsUtils;
 
     @Test
-    void getLastHourBars() throws IOException {
+    void getLastHourBars() {
         BarModel barModel1 = new BarModel("2021-01-01T00:00:00Z", 1.0, 2.0, 0.5, 1.5, 1000.0);
         BarModel barModel2 = new BarModel("2021-01-01T01:00:00Z", 1.1, 2.1, 0.6, 1.6, 1100.0);
 
         List<BarModel> rawBars = List.of(barModel1, barModel2);
 
-        when(barService.getHistoricalBars("BTC/USD", BarTimeFrame.HOUR1, 1, PeriodLengthUnit.WEEK)).thenReturn(rawBars);
+        BarSeries barSeries = BarsUtils.barModelListToBarSeries(rawBars);
 
-        BarSeries barSeries = barsUtils.getLastHourBars("BTC/USD", BarTimeFrame.HOUR1, 1, PeriodLengthUnit.WEEK);
-
-        verify(barService, times(1)).getHistoricalBars("BTC/USD", BarTimeFrame.HOUR1, 1, PeriodLengthUnit.WEEK);
         assertEquals(2, barSeries.getBarCount());
         assertEquals(1.0, barSeries.getBar(0).getClosePrice().doubleValue());
         assertEquals(2.0, barSeries.getBar(0).getHighPrice().doubleValue());
