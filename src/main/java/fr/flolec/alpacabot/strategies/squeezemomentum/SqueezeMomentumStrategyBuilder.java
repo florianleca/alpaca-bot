@@ -4,7 +4,7 @@ import fr.flolec.alpacabot.indicators.squeezemomentum.MomentumIndicator;
 import fr.flolec.alpacabot.indicators.squeezemomentum.SqueezeCountIndicator;
 import fr.flolec.alpacabot.indicators.squeezemomentum.SqueezeIndicator;
 import fr.flolec.alpacabot.indicators.squeezemomentum.SqueezeReleaseIndicator;
-import lombok.NoArgsConstructor;
+import fr.flolec.alpacabot.strategies.StrategyBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.ta4j.core.BarSeries;
@@ -21,28 +21,26 @@ import org.ta4j.core.rules.OverIndicatorRule;
  * Squeeze Momentum Indicator [LazyBear]
  */
 @Component
-@NoArgsConstructor
-public class SqueezeMomentumStrategy {
+public class SqueezeMomentumStrategyBuilder implements StrategyBuilder {
 
-    @Value("${SQZMO_LENGTH_BB}")
-    private int lengthBB;
+    private final int lengthBB;
 
-    @Value("${SQZMO_MULT_BB}")
-    private double multFactorBB;
+    private final double multFactorBB;
 
-    @Value("${SQZMO_LENGTH_KC}")
-    private int lengthKC;
+    private final int lengthKC;
 
-    @Value("${SQZMO_MULT_KC}")
-    private double multFactorKC;
+    private final double multFactorKC;
 
-    @Value("${SQZMO_SQUEEZE_ON_COUNT}")
-    private int squeezeOnCount;
+    private final int squeezeOnCount;
 
     private SqueezeReleaseIndicator squeezeReleaseIndicator;
     private MomentumIndicator momentumIndicator;
 
-    public SqueezeMomentumStrategy(int lengthBB, double multFactorBB, int lengthKC, double multFactorKC, int squeezeOnCount) {
+    public SqueezeMomentumStrategyBuilder(@Value("${SQZMO_LENGTH_BB}") int lengthBB,
+                                          @Value("${SQZMO_MULT_BB}") double multFactorBB,
+                                          @Value("${SQZMO_LENGTH_KC}") int lengthKC,
+                                          @Value("${SQZMO_MULT_KC}") double multFactorKC,
+                                          @Value("${SQZMO_SQUEEZE_ON_COUNT}") int squeezeOnCount) {
         this.lengthBB = lengthBB;
         this.multFactorBB = multFactorBB;
         this.lengthKC = lengthKC;

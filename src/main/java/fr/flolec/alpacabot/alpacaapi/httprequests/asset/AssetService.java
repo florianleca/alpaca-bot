@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
@@ -48,8 +48,7 @@ public class AssetService {
         List<AssetModel> assets = objectMapper.treeToValue(jsonNode, new TypeReference<ArrayList<AssetModel>>() {
         });
         selectUSDAssets(assets);
-        Collections.sort(assets);
-        return assets;
+        return assets.stream().sorted(Comparator.comparing(AssetModel::getName)).toList();
     }
 
     public void selectUSDAssets(List<AssetModel> assets) {

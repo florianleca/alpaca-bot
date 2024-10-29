@@ -1,11 +1,6 @@
 package fr.flolec.alpacabot.strategies.utils;
 
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarModel;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarService;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarTimeFrame;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.PeriodLengthUnit;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.BaseBar;
@@ -22,20 +17,19 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-@Component
 public class BarsUtils {
 
-    private final BarService barService;
-
-    @Autowired
-    public BarsUtils(BarService barService) {
-        this.barService = barService;
+    private BarsUtils() {
     }
 
-    public BarSeries getLastHourBars(String assetName, BarTimeFrame timeFrame, int periodLength, PeriodLengthUnit periodLengthUnit) throws IOException {
-        List<BarModel> rawBars = barService.getHistoricalBars(assetName, timeFrame, periodLength, periodLengthUnit);
+    public static BarSeries barModelListToBarSeries(List<BarModel> rawBars) {
         BarSeries barSeries = new BaseBarSeries();
-        rawBars.forEach(bar -> barSeries.addBar(ZonedDateTime.parse(bar.getDate()), bar.getOpen(), bar.getHigh(), bar.getLow(), bar.getClose(), bar.getVolume()));
+        rawBars.forEach(bar -> {
+            ZonedDateTime barDate = ZonedDateTime.parse(bar.getDate());
+            if (barSeries.getBarCount() == 0 || barDate.isAfter(barSeries.getLastBar().getEndTime())) {
+                barSeries.addBar(ZonedDateTime.parse(bar.getDate()), bar.getOpen(), bar.getHigh(), bar.getLow(), bar.getClose(), bar.getVolume());
+            }
+        });
         return barSeries;
     }
 
