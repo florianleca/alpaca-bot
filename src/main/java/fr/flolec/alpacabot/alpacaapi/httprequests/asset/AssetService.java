@@ -1,52 +1,43 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests.asset;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.flolec.alpacabot.alpacaapi.httprequests.HttpRequestService;
-import okhttp3.HttpUrl;
-import okhttp3.Response;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
-import static java.util.Objects.requireNonNull;
 
 @Component
 public class AssetService {
 
-    private final String endpoint;
-    private final ObjectMapper objectMapper;
-    private final HttpRequestService httpRequestService;
+    private final RestClient restClient;
 
-    @Autowired
-    public AssetService(@Value("${PAPER_ASSETS_ENDPOINT}") String endpoint,
-                        ObjectMapper objectMapper,
-                        HttpRequestService httpRequestService) {
-        this.endpoint = endpoint;
-        this.objectMapper = objectMapper;
-        this.httpRequestService = httpRequestService;
+    @Value("${ALPACA_API_ASSETS_URI}")
+    private String uri;
+
+    public AssetService(RestClient restClient) {
+        this.restClient = restClient;
     }
 
     /**
      * @return Sorted list of all active crypto assets in USD
-     * @throws IOException If an I/O error occurs while fetching or processing the data
      */
-    public List<AssetModel> getAssetsList() throws IOException {
-        String url = requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
-                .addQueryParameter("status", "active")
-                .addQueryParameter("exchange", "CRYPTO")
-                .toString();
-        Response response = httpRequestService.get(url);
-        assert response.body() != null;
-        JsonNode jsonNode = objectMapper.readTree(response.body().string());
-        List<AssetModel> assets = objectMapper.treeToValue(jsonNode, new TypeReference<ArrayList<AssetModel>>() {
-        });
+    public List<AssetModel> getAssetsList() {
+        ResponseEntity<List<AssetModel>> response = restClient.get()
+                .uri(UriComponentsBuilder
+                        .fromUriString(uri)
+                        .queryParam("status", "active")
+                        .queryParam("exchange", "CRYPTO")
+                        .toUriString())
+                .retrieve()
+                .toEntity(new ParameterizedTypeReference<>() {
+                });
+
+        List<AssetModel> assets = response.getBody();
+        if (assets == null) return List.of();
         selectUSDAssets(assets);
         return assets.stream().sorted(Comparator.comparing(AssetModel::getName)).toList();
     }

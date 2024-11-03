@@ -1,50 +1,42 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests.order;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import fr.flolec.alpacabot.alpacaapi.httprequests.HttpRequestService;
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClient;
 
 @Service
 public class OrderService {
 
-    private final String endpoint;
-    private final ObjectMapper objectMapper;
-    private final HttpRequestService httpRequestService;
-    private final Logger logger = LoggerFactory.getLogger(OrderService.class);
+    @Value("${ALPACA_API_ORDERS_URI}")
+    private String uri;
 
-    @Autowired
-    public OrderService(@Value("${PAPER_ORDERS_ENDPOINT}") String endpoint,
-                        ObjectMapper objectMapper,
-                        HttpRequestService httpRequestService) {
-        this.endpoint = endpoint;
+    private final Logger logger = LoggerFactory.getLogger(OrderService.class);
+    private final RestClient restClient;
+    private final ObjectMapper objectMapper;
+
+    public OrderService(RestClient restClient, ObjectMapper objectMapper) {
+        this.restClient = restClient;
         this.objectMapper = objectMapper;
-        this.httpRequestService = httpRequestService;
     }
 
-    public OrderModel getOrderById(String orderId) throws IOException {
-        Response response = httpRequestService.get(endpoint + "/" + orderId);
-        assert response.body() != null;
-
-        if (!response.isSuccessful()) {
-            String errorMessage = objectMapper.readTree(response.body().string()).get("message").asText();
-            logger.warn("Order of id '{}' not found: '{}' (code {})", orderId, errorMessage, response.code());
+    public OrderModel getOrderById(String orderId) {
+        try {
+            ResponseEntity<OrderModel> response = restClient.get()
+                    .uri(uri + "/" + orderId)
+                    .retrieve()
+                    .toEntity(OrderModel.class);
+            return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            logger.warn("Could not retrieve order of id '{}': {}", orderId, e.getMessage());
             return null;
         }
-
-        String jsonString = response.body().string();
-        JsonNode jsonNode = objectMapper.readTree(jsonString);
-        return objectMapper.treeToValue(jsonNode, OrderModel.class);
     }
 
     /**
@@ -54,61 +46,62 @@ public class OrderService {
      * @param timeInForce For Crypto Trading, Alpaca supports the following Time-In-Force designations: day, gtc, ioc and fok
      * @return The order object resulting from the proposed transaction (might not be filled yet)
      */
-    public OrderModel createMarketNotionalOrder(String symbol, String notional, OrderSide side, TimeInForce timeInForce) throws IOException {
-        ObjectNode jsonBody = objectMapper.createObjectNode()
-                .put(OrderFieldsNames.SYMBOL.toString(), symbol)
-                .put(OrderFieldsNames.NOTIONAL.toString(), notional)
-                .put(OrderFieldsNames.SIDE.toString(), side.toString())
-                .put(OrderFieldsNames.TYPE.toString(), "market")
-                .put(OrderFieldsNames.TIME_IN_FORCE.toString(), timeInForce.toString());
-        return createOrder(jsonBody);
+    public OrderModel createMarketNotionalOrder(String symbol,
+                                                String notional,
+                                                OrderSide side,
+                                                TimeInForce timeInForce) {
+        PostOrderModel postOrder = new PostOrderModel();
+        postOrder.setSymbol(symbol);
+        postOrder.setNotional(notional);
+        postOrder.setSide(side.toString());
+        postOrder.setType("market");
+        postOrder.setTimeInForce(timeInForce.toString());
+        return createOrder(postOrder);
     }
 
-    public OrderModel createLimitNotionalOrder(String symbol, String notional, OrderSide side, TimeInForce timeInForce, String limitPrice) throws IOException {
-        ObjectNode jsonBody = objectMapper.createObjectNode()
-                .put(OrderFieldsNames.SYMBOL.toString(), symbol)
-                .put(OrderFieldsNames.NOTIONAL.toString(), notional)
-                .put(OrderFieldsNames.SIDE.toString(), side.toString())
-                .put(OrderFieldsNames.TYPE.toString(), "limit")
-                .put(OrderFieldsNames.TIME_IN_FORCE.toString(), timeInForce.toString())
-                .put(OrderFieldsNames.LIMIT_PRICE.toString(), limitPrice);
-        return createOrder(jsonBody);
+    public OrderModel createLimitNotionalOrder(String symbol,
+                                               String notional,
+                                               OrderSide side,
+                                               TimeInForce timeInForce,
+                                               String limitPrice) {
+        PostOrderModel postOrder = new PostOrderModel();
+        postOrder.setSymbol(symbol);
+        postOrder.setNotional(notional);
+        postOrder.setSide(side.toString());
+        postOrder.setType("limit");
+        postOrder.setTimeInForce(timeInForce.toString());
+        postOrder.setLimitPrice(limitPrice);
+        return createOrder(postOrder);
     }
 
-    public OrderModel createLimitQuantityOrder(String symbol, String quantity, OrderSide side, TimeInForce timeInForce, String limitPrice) throws IOException {
-        ObjectNode jsonBody = objectMapper.createObjectNode()
-                .put(OrderFieldsNames.SYMBOL.toString(), symbol)
-                .put(OrderFieldsNames.QUANTITY.toString(), quantity)
-                .put(OrderFieldsNames.SIDE.toString(), side.toString())
-                .put(OrderFieldsNames.TYPE.toString(), "limit")
-                .put(OrderFieldsNames.TIME_IN_FORCE.toString(), timeInForce.toString())
-                .put(OrderFieldsNames.LIMIT_PRICE.toString(), limitPrice);
-        return createOrder(jsonBody);
+    public OrderModel createLimitQuantityOrder(String symbol,
+                                               String quantity,
+                                               OrderSide side,
+                                               TimeInForce timeInForce,
+                                               String limitPrice) {
+        PostOrderModel postOrder = new PostOrderModel();
+        postOrder.setSymbol(symbol);
+        postOrder.setQuantity(quantity);
+        postOrder.setSide(side.toString());
+        postOrder.setType("limit");
+        postOrder.setTimeInForce(timeInForce.toString());
+        postOrder.setLimitPrice(limitPrice);
+        return createOrder(postOrder);
     }
 
-    private OrderModel createOrder(ObjectNode jsonBody) throws IOException {
-        RequestBody body = RequestBody.create(jsonBody.toString(), MediaType.parse("application/json; charset=utf-8"));
-        Response response = httpRequestService.post(endpoint, body);
-        assert response.body() != null;
-
-        if (!response.isSuccessful()) {
-            String errorMessage = objectMapper.readTree(response.body().string()).get("message").asText();
-            logger.warn("Order was not created: '{}' (code {})", errorMessage, response.code());
-            return null;
-        }
-
-        String responseString = response.body().string();
-        logger.info("Response after ordering: {}", responseString);
-        JsonNode jsonNode = objectMapper.readTree(responseString);
-        return objectMapper.treeToValue(jsonNode, OrderModel.class);
-    }
-
-    public OrderModel messageToOrder(String message) {
+    private OrderModel createOrder(PostOrderModel postOrder) {
         try {
-            JsonNode jsonNode = objectMapper.readTree(message).path("data").path("order");
-            return objectMapper.treeToValue(jsonNode, OrderModel.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            String response = restClient.post()
+                    .uri(uri)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(postOrder)
+                    .retrieve()
+                    .body(String.class);
+            logger.info("An order has been created: {}", response);
+            return objectMapper.readValue(response, OrderModel.class);
+        } catch (HttpStatusCodeException | JsonProcessingException e) {
+            logger.warn("Order could not be created: {}", e.getMessage());
+            return null;
         }
     }
 

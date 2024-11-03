@@ -1,6 +1,7 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests;
 
-import fr.flolec.alpacabot.WireMockedTest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.position.PositionService;
@@ -11,17 +12,30 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.client.MockRestServiceServer;
 
-import java.io.IOException;
 import java.util.List;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 @ExtendWith(MockitoExtension.class)
-public class PositionServiceTest extends WireMockedTest {
+@RestClientTest(PositionService.class)
+@ContextConfiguration(classes = {
+        RestClientConfiguration.class,
+        PositionService.class})
+public class PositionServiceTest {
 
     public static final String RESPONSE_GET_A_POSITION_NOMINAL = "{\"asset_id\":\"64bbff51-59d6-4b3c-9351-13ad85e3c752\",\"symbol\":\"BTCUSD\",\"exchange\":\"CRYPTO\",\"asset_class\":\"crypto\",\"asset_marginable\":false,\"qty\":\"0.000014071\",\"avg_entry_price\":\"69673.01\",\"side\":\"long\",\"market_value\":\"0.977982341399999887432\",\"cost_basis\":\"0.980368924\",\"unrealized_pl\":\"-0.002386582600000112568\",\"unrealized_plpc\":\"-0.0024343719405779\",\"unrealized_intraday_pl\":\"-0.002386582310000112568\",\"unrealized_intraday_plpc\":\"-0.002434371645491\",\"current_price\":\"69503.399999999992\",\"lastday_price\":\"69341.7\",\"change_today\":\"0.0023319301372766\",\"qty_available\":\"0.000014071\"}";
     public static final String RESPONSE_GET_A_POSITION_ERROR_SYMBOL = "{\"code\": 40410000,\"message\": \"symbol not found: BTCdUSD\"}";
@@ -37,7 +51,17 @@ public class PositionServiceTest extends WireMockedTest {
     public static final String RESPONSE_DELETE_ALL_POSITIONS_NOMINAL_3 = "[{\"symbol\":\"BTCUSD\",\"status\":200,\"body\":{\"id\":\"410fbd82-7fbc-4940-9953-de7d0772fa47\",\"client_order_id\":\"ecfab9a9-3a4b-4079-a527-1dccd3cbbef7\",\"created_at\":\"2024-06-12T14:31:54.650475435Z\",\"updated_at\":\"2024-06-12T14:31:54.652423835Z\",\"submitted_at\":\"2024-06-12T14:31:54.650475435Z\",\"filled_at\":null,\"expired_at\":null,\"canceled_at\":null,\"failed_at\":null,\"replaced_at\":null,\"replaced_by\":null,\"replaces\":null,\"asset_id\":\"276e2673-764b-4ab6-a611-caf665ca6340\",\"symbol\":\"BTC/USD\",\"asset_class\":\"crypto\",\"notional\":null,\"qty\":\"0.000013997\",\"filled_qty\":\"0\",\"filled_avg_price\":null,\"order_class\":\"\",\"order_type\":\"market\",\"type\":\"market\",\"side\":\"sell\",\"time_in_force\":\"gtc\",\"limit_price\":null,\"stop_price\":null,\"status\":\"pending_new\",\"extended_hours\":false,\"legs\":null,\"trail_percent\":null,\"trail_price\":null,\"hwm\":null,\"subtag\":null,\"source\":null}},{\"symbol\":\"ETHUSD\",\"status\":200,\"body\":{\"id\":\"94819895-0d54-48cc-97e5-c95f4be33846\",\"client_order_id\":\"6f6c4a68-cfe0-4db0-962f-4608a596bda1\",\"created_at\":\"2024-06-12T14:31:54.652449525Z\",\"updated_at\":\"2024-06-12T14:31:54.652943475Z\",\"submitted_at\":\"2024-06-12T14:31:54.652449525Z\",\"filled_at\":null,\"expired_at\":null,\"canceled_at\":null,\"failed_at\":null,\"replaced_at\":null,\"replaced_by\":null,\"replaces\":null,\"asset_id\":\"a1733398-6acc-4e92-af24-0d0667f78713\",\"symbol\":\"ETH/USD\",\"asset_class\":\"crypto\",\"notional\":null,\"qty\":\"0.000269088\",\"filled_qty\":\"0\",\"filled_avg_price\":null,\"order_class\":\"\",\"order_type\":\"market\",\"type\":\"market\",\"side\":\"sell\",\"time_in_force\":\"gtc\",\"limit_price\":null,\"stop_price\":null,\"status\":\"pending_new\",\"extended_hours\":false,\"legs\":null,\"trail_percent\":null,\"trail_price\":null,\"hwm\":null,\"subtag\":null,\"source\":null}},{\"symbol\":\"MKRUSD\",\"status\":200,\"body\":{\"id\":\"8cf21d4b-a323-4a60-bbdd-07c2a7b5060f\",\"client_order_id\":\"0dcbdfb6-5844-4a19-9ab1-7d8726865ca2\",\"created_at\":\"2024-06-12T14:31:54.652968385Z\",\"updated_at\":\"2024-06-12T14:31:54.653394145Z\",\"submitted_at\":\"2024-06-12T14:31:54.652968385Z\",\"filled_at\":null,\"expired_at\":null,\"canceled_at\":null,\"failed_at\":null,\"replaced_at\":null,\"replaced_by\":null,\"replaces\":null,\"asset_id\":\"90a83e2d-e574-404b-9344-74130736b71c\",\"symbol\":\"MKR/USD\",\"asset_class\":\"crypto\",\"notional\":null,\"qty\":\"0.000415137\",\"filled_qty\":\"0\",\"filled_avg_price\":null,\"order_class\":\"\",\"order_type\":\"market\",\"type\":\"market\",\"side\":\"sell\",\"time_in_force\":\"gtc\",\"limit_price\":null,\"stop_price\":null,\"status\":\"pending_new\",\"extended_hours\":false,\"legs\":null,\"trail_percent\":null,\"trail_price\":null,\"hwm\":null,\"subtag\":null,\"source\":null}}]";
     public static final String RESPONSE_DELETE_ALL_POSITIONS_ERROR = "{\"code\":40010001,\"message\":\"un message d'erreur\"}";
 
+    @Value("${ALPACA_API_POSITIONS_URI}")
+    private String uri;
+
+    @Autowired
     private PositionService positionService;
+
+    @Autowired
+    private MockRestServiceServer mockRestServiceServer;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private PositionService spiedPositionService;
 
@@ -46,27 +70,28 @@ public class PositionServiceTest extends WireMockedTest {
 
     @BeforeEach
     void setUp() {
-        this.positionService = new PositionService("http://localhost:8080/v2/positions", objectMapper, httpRequestService);
         ReflectionTestUtils.setField(positionService, "logger", logger);
         this.spiedPositionService = spy(positionService);
     }
 
     @Test
-    @DisplayName("Taking \"/\" out of a symbol")
-    void takeSlashOutOfSymbol() {
+    @DisplayName("takeSlashOutOfSymbol: symbol with slash -> slash taken out")
+    void takeSlashOutOfSymbol_symbolWithSlash_slashTakenOut() {
         assertEquals("BTCUSD", positionService.takeSlashOutOfSymbol("BTC/USD"));
+    }
+
+    @Test
+    @DisplayName("takeSlashOutOfSymbol: symbol without slash -> nothing changes")
+    void takeSlashOutOfSymbol_symbolWithoutSlash_nothingChanges() {
         assertEquals("BTCUSD", positionService.takeSlashOutOfSymbol("BTCUSD"));
     }
 
     @Test
-    @DisplayName("Retrieving an open position: nominal")
-    void getAnOpenPositionNominal() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(get(urlPathEqualTo("/v2/positions/BTCUSD"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_GET_A_POSITION_NOMINAL)));
+    @DisplayName("getAnOpenPosition: nominal -> position serialized")
+    void getAnOpenPosition_nominal_positionSerialized() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(uri + "/BTCUSD"))
+                .andRespond(withSuccess(RESPONSE_GET_A_POSITION_NOMINAL, MediaType.APPLICATION_JSON));
 
         PositionModel positionModel = positionService.getAnOpenPosition("BTC/USD");
 
@@ -87,50 +112,41 @@ public class PositionServiceTest extends WireMockedTest {
     }
 
     @Test
-    @DisplayName("Retrieving an open position: error (wrong symbol)")
-    void getAnOpenPositionErrorSymbol() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(get(urlPathEqualTo("/v2/positions/BTCdUSD"))
-                .willReturn(aResponse()
-                        .withStatus(404)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_GET_A_POSITION_ERROR_SYMBOL)));
+    @DisplayName("getAnOpenPosition: symbol not found -> logged error")
+    void getAnOpenPosition_symbolNotFound_loggedError() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(uri + "/BTCdUSD"))
+                .andRespond(withResourceNotFound()
+                        .body(RESPONSE_GET_A_POSITION_ERROR_SYMBOL)
+                        .contentType(MediaType.APPLICATION_JSON));
 
         PositionModel positionModel = positionService.getAnOpenPosition("BTCd/USD");
 
         assertNull(positionModel);
-        org.mockito.Mockito.verify(logger).warn("Position couldn't be retrieved: '{}' (code {})",
-                "symbol not found: BTCdUSD",
-                404);
+        verify(logger).warn("{} position could not be retrieved: {}", "BTCdUSD", "404 Not Found: \"{\"code\": 40410000,\"message\": \"symbol not found: BTCdUSD\"}\"");
     }
 
     @Test
-    @DisplayName("Retrieving an open position: error (no open position for this symbol)")
-    void getAnOpenPositionErrorDoesNotExist() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(get(urlPathEqualTo("/v2/positions/MKRUSD"))
-                .willReturn(aResponse()
-                        .withStatus(404)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_GET_A_POSITION_ERROR_NO_POSITION)));
+    @DisplayName("getAnOpenPosition: position does not exist -> logged error")
+    void getAnOpenPosition_positionDoesNotExist_loggedError() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(uri + "/MKRUSD"))
+                .andRespond(withResourceNotFound()
+                        .body(RESPONSE_GET_A_POSITION_ERROR_NO_POSITION)
+                        .contentType(MediaType.APPLICATION_JSON));
 
         PositionModel positionModel = positionService.getAnOpenPosition("MKR/USD");
 
         assertNull(positionModel);
-        org.mockito.Mockito.verify(logger).warn("Position couldn't be retrieved: '{}' (code {})",
-                "position does not exist",
-                404);
+        verify(logger).warn("{} position could not be retrieved: {}", "MKRUSD", "404 Not Found: \"{\"code\": 40410000, \"message\": \"position does not exist\"}\"");
     }
 
     @Test
-    @DisplayName("Retrieving all open position: 0 position")
-    void getAllOpenPositionsX0() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(get(urlPathEqualTo("/v2/positions"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_GET_ALL_POSITIONS_0)));
+    @DisplayName("getAllOpenPositions: 0 open position -> empty list retrieved")
+    void getAllOpenPositions_zeroOpenPosition_emptyListRetrieved() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(uri))
+                .andRespond(withSuccess(RESPONSE_GET_ALL_POSITIONS_0, MediaType.APPLICATION_JSON));
 
         List<PositionModel> positionModels = positionService.getAllOpenPositions();
 
@@ -139,14 +155,11 @@ public class PositionServiceTest extends WireMockedTest {
     }
 
     @Test
-    @DisplayName("Retrieving all open position: 1 position")
-    void getAllOpenPositionsX1() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(get(urlPathEqualTo("/v2/positions"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_GET_ALL_POSITIONS_1)));
+    @DisplayName("getAllOpenPositions: 1 open position -> 1 element retrieved")
+    void getAllOpenPositions_oneOpenPosition_oneElementRetrieved() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(uri))
+                .andRespond(withSuccess(RESPONSE_GET_ALL_POSITIONS_1, MediaType.APPLICATION_JSON));
 
         List<PositionModel> positionModels = positionService.getAllOpenPositions();
 
@@ -157,14 +170,11 @@ public class PositionServiceTest extends WireMockedTest {
     }
 
     @Test
-    @DisplayName("Retrieving all open position: 3 positions")
-    void getAllOpenPositionsX3() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(get(urlPathEqualTo("/v2/positions"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_GET_ALL_POSITIONS_3)));
+    @DisplayName("getAllOpenPositions: 3 open positions -> 3 elements retrieved")
+    void getAllOpenPositions_threeOpenPositions_threeElementsRetrieved() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(uri))
+                .andRespond(withSuccess(RESPONSE_GET_ALL_POSITIONS_3, MediaType.APPLICATION_JSON));
 
         List<PositionModel> positionModels = positionService.getAllOpenPositions();
 
@@ -179,50 +189,57 @@ public class PositionServiceTest extends WireMockedTest {
     }
 
     @Test
-    @DisplayName("Get current quantity: not empty")
-    void getCurrentQtyOfAssetNotEmpty() throws IOException {
-        PositionModel positionModel = new PositionModel();
-        positionModel.setQuantity("123");
-        doReturn(positionModel).when(spiedPositionService).getAnOpenPosition("TEST");
-        assertEquals(123, spiedPositionService.getCurrentQtyOfAsset("TEST"));
+    @DisplayName("getAllOpenPositions: error -> no retrieved position & logged error")
+    void getAllOpenPositions_error_noRetrievedPositionAndLoggedError() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(uri))
+                .andRespond(withStatus(HttpStatus.FORBIDDEN).body("{error body}"));
+
+        List<PositionModel> positionModels = positionService.getAllOpenPositions();
+
+        assertNotNull(positionModels);
+        assertEquals(0, positionModels.size());
+        verify(logger).warn("All open positions could not be retrieved: {}", "403 Forbidden: \"{error body}\"");
     }
 
     @Test
-    @DisplayName("Get current quantity: empty")
-    void getCurrentQtyOfAssetEmpty() throws IOException {
+    @DisplayName("getCurrentQtyOfAsset: position exists -> quantity retrieved")
+    void getCurrentQtyOfAsset_positionExists_quantityRetrieved() {
+        PositionModel positionModel = new PositionModel();
+        positionModel.setQuantity("123.4");
+        doReturn(positionModel).when(spiedPositionService).getAnOpenPosition("TEST");
+        assertEquals(123.4, spiedPositionService.getCurrentQtyOfAsset("TEST"));
+    }
+
+    @Test
+    @DisplayName("getCurrentQtyOfAsset: no position -> 0 quantity")
+    void getCurrentQtyOfAsset_noPosition_zeroQuantity() {
+        doReturn(null).when(spiedPositionService).getAnOpenPosition("TEST");
+        assertEquals(0, spiedPositionService.getCurrentQtyOfAsset("TEST"));
+    }
+
+    @Test
+    @DisplayName("getCurrentQtyOfAsset: null quantity -> 0 quantity")
+    void getCurrentQtyOfAsset_nullQuantity_zeroQuantity() {
         PositionModel positionModel = new PositionModel();
         doReturn(positionModel).when(spiedPositionService).getAnOpenPosition("TEST");
         assertEquals(0, spiedPositionService.getCurrentQtyOfAsset("TEST"));
     }
 
     @Test
-    @DisplayName("liquidatePositionByPercentage() calls liquidatePosition()")
-    void liquidatePositionByPercentage() throws IOException {
-        doReturn(null).when(spiedPositionService).liquidatePosition(any());
-        spiedPositionService.liquidatePositionByPercentage("BTC/USD", 20);
-        verify(spiedPositionService, times(1)).liquidatePosition("http://localhost:8080/v2/positions/BTCUSD?percentage=20.000000000");
-    }
+    @DisplayName("liquidatePositionByPercentage: nominal -> sell order created")
+    void liquidatePositionByPercentage_nominal_sellOrderCreated() throws JsonProcessingException {
+        OrderModel expectedOrderModel = new OrderModel();
+        expectedOrderModel.setSymbol("BTC/USD");
+        expectedOrderModel.setSide("sell");
+        String jsonResponse = objectMapper.writeValueAsString(expectedOrderModel);
 
-    @Test
-    @DisplayName("liquidatePositionByQuantity() calls liquidatePosition()")
-    void liquidatePositionByQuantity() throws IOException {
-        doReturn(null).when(spiedPositionService).liquidatePosition(any());
-        spiedPositionService.liquidatePositionByQuantity("BTC/USD", 0.1);
-        verify(spiedPositionService, times(1)).liquidatePosition("http://localhost:8080/v2/positions/BTCUSD?qty=0.100000000");
-    }
+        mockRestServiceServer.expect(method(HttpMethod.DELETE))
+                .andExpect(requestTo(startsWith(uri + "/BTCUSD")))
+                .andExpect(queryParam("percentage", "66.600000000"))
+                .andRespond(withSuccess(jsonResponse, MediaType.APPLICATION_JSON));
 
-    @Test
-    @DisplayName("Liquidate position: nominal")
-    void liquidatePositionNominal() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(delete(urlPathEqualTo("/v2/positions/BTCUSD"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_DELETE_POSITION_NOMINAL)));
-
-
-        OrderModel orderModel = positionService.liquidatePosition("http://localhost:8080/v2/positions/BTCUSD");
+        OrderModel orderModel = positionService.liquidatePositionByPercentage("BTC/USD", 66.6);
 
         assertNotNull(orderModel);
         assertEquals("BTC/USD", orderModel.getSymbol());
@@ -230,50 +247,107 @@ public class PositionServiceTest extends WireMockedTest {
     }
 
     @Test
-    @DisplayName("Liquidate position: error")
-    void liquidatePositionError() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(delete(urlPathEqualTo("/v2/positions/BTCUSD"))
-                .willReturn(aResponse()
-                        .withStatus(422)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_DELETE_POSITION_ERROR)));
+    @DisplayName("liquidatePositionByPercentage: error -> no sell order created & logged error")
+    void liquidatePositionByPercentage_error_noSellOrderCreatedAndLoggedError() {
+        mockRestServiceServer.expect(method(HttpMethod.DELETE))
+                .andExpect(requestTo(startsWith(uri + "/BTCUSD")))
+                .andExpect(queryParam("percentage", "66.600000000"))
+                .andRespond(withStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body("{error body}")
+                        .contentType(MediaType.APPLICATION_JSON));
 
-        OrderModel orderModel = positionService.liquidatePosition("http://localhost:8080/v2/positions/BTCUSD");
+        OrderModel orderModel = positionService.liquidatePositionByPercentage("BTC/USD", 66.6);
 
         assertNull(orderModel);
-        verify(logger).warn("Position couldn't be liquidated: '{}' (code {})",
-                "percentage must be in between 0 and 100",
-                422);
+        verify(logger).warn("{} position could not be liquidated by percentage: {}", "BTCUSD", "422 Unprocessable Entity: \"{error body}\"");
     }
 
     @Test
-    @DisplayName("Liquidate all positions: 0 position")
-    void liquidateAllPositionsX0() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(delete(urlPathEqualTo("/v2/positions"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_DELETE_ALL_POSITIONS_NOMINAL_0)));
+    @DisplayName("liquidatePositionByQuantity: nominal -> sell order created")
+    void liquidatePositionByQuantity_nominal_sellOrderCreated() throws JsonProcessingException {
+        OrderModel expectedOrderModel = new OrderModel();
+        expectedOrderModel.setSymbol("BTC/USD");
+        expectedOrderModel.setSide("sell");
+        String jsonResponse = objectMapper.writeValueAsString(expectedOrderModel);
 
-        List<OrderModel> orderModels = positionService.liquidateAllPositions();
+        mockRestServiceServer.expect(method(HttpMethod.DELETE))
+                .andExpect(requestTo(startsWith(uri + "/BTCUSD")))
+                .andExpect(queryParam("qty", "12.340000000"))
+                .andRespond(withSuccess(jsonResponse, MediaType.APPLICATION_JSON));
+
+        OrderModel orderModel = positionService.liquidatePositionByQuantity("BTC/USD", 12.34);
+
+        assertNotNull(orderModel);
+        assertEquals("BTC/USD", orderModel.getSymbol());
+        assertEquals("sell", orderModel.getSide());
+    }
+
+    @Test
+    @DisplayName("liquidatePositionByQuantity: error -> no sell order created & logged error")
+    void liquidatePositionByQuantity_error_noSellOrderCreatedAndLoggedError() {
+        mockRestServiceServer.expect(method(HttpMethod.DELETE))
+                .andExpect(requestTo(startsWith(uri + "/BTCUSD")))
+                .andExpect(queryParam("qty", "12.340000000"))
+                .andRespond(withStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body("{error body}")
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        OrderModel orderModel = positionService.liquidatePositionByQuantity("BTC/USD", 12.34);
+
+        assertNull(orderModel);
+        verify(logger).warn("{} position could not be liquidated by quantity: {}", "BTCUSD", "422 Unprocessable Entity: \"{error body}\"");
+    }
+
+    @Test
+    @DisplayName("liquidatePosition: nominal -> sell order created")
+    void liquidatePosition_nominal_sellOrderCreated() {
+        mockRestServiceServer.expect(method(HttpMethod.DELETE))
+                .andExpect(requestTo(uri + "/BTCUSD"))
+                .andRespond(withSuccess(RESPONSE_DELETE_POSITION_NOMINAL, MediaType.APPLICATION_JSON));
+
+        OrderModel orderModel = positionService.liquidatePosition("BTC/USD");
+
+        assertNotNull(orderModel);
+        assertEquals("BTC/USD", orderModel.getSymbol());
+        assertEquals("sell", orderModel.getSide());
+    }
+
+    @Test
+    @DisplayName("liquidatePosition: error -> no sell order & logged error")
+    void liquidatePosition_error_noSellOrderAndLoggedError() {
+        mockRestServiceServer.expect(method(HttpMethod.DELETE))
+                .andExpect(requestTo(uri + "/BTCUSD"))
+                .andRespond(withStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+                        .body(RESPONSE_DELETE_POSITION_ERROR)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        OrderModel orderModel = positionService.liquidatePosition("BTC/USD");
+
+        assertNull(orderModel);
+        verify(logger).warn("{} position could not be liquidated: {}", "BTCUSD", "422 Unprocessable Entity: \"{\"code\":40010001,\"message\":\"percentage must be in between 0 and 100\"}\"");
+    }
+
+    @Test
+    @DisplayName("liquidateAllPositions: 0 open position -> 0 sell order")
+    void liquidateAllPositions_zeroOpenPosition_zeroSellOrder() {
+        mockRestServiceServer.expect(method(HttpMethod.DELETE))
+                .andExpect(requestTo(uri + "?cancel_orders=false"))
+                .andRespond(withSuccess(RESPONSE_DELETE_ALL_POSITIONS_NOMINAL_0, MediaType.APPLICATION_JSON));
+
+        List<OrderModel> orderModels = positionService.liquidateAllPositions(false);
 
         assertNotNull(orderModels);
         assertEquals(0, orderModels.size());
     }
 
     @Test
-    @DisplayName("Liquidate all positions: 1 position")
-    void liquidateAllPositionsX1() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(delete(urlPathEqualTo("/v2/positions"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_DELETE_ALL_POSITIONS_NOMINAL_1)));
+    @DisplayName("liquidateAllPositions: 1 open position -> 1 sell order")
+    void liquidateAllPositions_oneOpenPosition_oneSellOrder() {
+        mockRestServiceServer.expect(method(HttpMethod.DELETE))
+                .andExpect(requestTo(uri + "?cancel_orders=false"))
+                .andRespond(withSuccess(RESPONSE_DELETE_ALL_POSITIONS_NOMINAL_1, MediaType.APPLICATION_JSON));
 
-        List<OrderModel> orderModels = positionService.liquidateAllPositions();
+        List<OrderModel> orderModels = positionService.liquidateAllPositions(false);
 
         assertNotNull(orderModels);
         assertEquals(1, orderModels.size());
@@ -284,16 +358,13 @@ public class PositionServiceTest extends WireMockedTest {
     }
 
     @Test
-    @DisplayName("Liquidate all positions: 3 positions")
-    void liquidateAllPositionsX3() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(delete(urlPathEqualTo("/v2/positions"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_DELETE_ALL_POSITIONS_NOMINAL_3)));
+    @DisplayName("liquidateAllPositions: 3 open positions -> 3 sell orders")
+    void liquidateAllPositions_threeOpenPositions_threeSellOrders() {
+        mockRestServiceServer.expect(method(HttpMethod.DELETE))
+                .andExpect(requestTo(uri + "?cancel_orders=false"))
+                .andRespond(withSuccess(RESPONSE_DELETE_ALL_POSITIONS_NOMINAL_3, MediaType.APPLICATION_JSON));
 
-        List<OrderModel> orderModels = positionService.liquidateAllPositions();
+        List<OrderModel> orderModels = positionService.liquidateAllPositions(false);
 
         assertNotNull(orderModels);
         assertEquals(3, orderModels.size());
@@ -312,20 +383,18 @@ public class PositionServiceTest extends WireMockedTest {
     }
 
     @Test
-    @DisplayName("Liquidate all positions: error")
-    void liquidateAllPositionsError() throws IOException {
-        // Configurer la réponse simulée
-        stubFor(delete(urlPathEqualTo("/v2/positions"))
-                .willReturn(aResponse()
-                        .withStatus(400)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(RESPONSE_DELETE_ALL_POSITIONS_ERROR)));
+    @DisplayName("liquidateAllPositions: error -> no sell order & logged error")
+    void liquidateAllPositions_error_noSellOrderAndLoggedError() {
+        mockRestServiceServer.expect(method(HttpMethod.DELETE))
+                .andExpect(requestTo(uri + "?cancel_orders=false"))
+                .andRespond(withBadRequest()
+                        .body(RESPONSE_DELETE_ALL_POSITIONS_ERROR)
+                        .contentType(MediaType.APPLICATION_JSON));
 
-        List<OrderModel> orderModels = positionService.liquidateAllPositions();
+        List<OrderModel> orderModels = positionService.liquidateAllPositions(false);
 
         assertEquals(0, orderModels.size());
-        verify(logger).warn("Positions couldn't be liquidated: '{}' (code {})",
-                "un message d'erreur",
-                400);
+        verify(logger).warn("All positions could not be liquidated: {}", "400 Bad Request: \"{\"code\":40010001,\"message\":\"un message d'erreur\"}\"");
     }
+
 }
