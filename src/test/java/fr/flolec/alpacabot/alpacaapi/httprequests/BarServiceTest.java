@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -20,8 +22,8 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.queryParam;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @RestClientTest(BarService.class)
@@ -44,8 +46,8 @@ class BarServiceTest {
     private MockRestServiceServer mockRestServiceServer;
 
     @Test
-    @DisplayName("Historical bars are retrieved and serialized correctly")
-    void getHistoricalBarsNoToken() {
+    @DisplayName("getHistoricalBars: no page token -> one page retrieved")
+    void getHistoricalBars_noPageToken_onePageRetrieved() {
         mockRestServiceServer.expect(requestTo(startsWith(uri)))
                 .andExpect(queryParam("symbols", "AAVE/USD"))
                 .andRespond(withSuccess(BARS_RESPONSE_BODY_NO_TOKEN, MediaType.APPLICATION_JSON));
@@ -65,14 +67,12 @@ class BarServiceTest {
     }
 
     @Test
-    @DisplayName("GIVEN a page token WHEN getHistoricalBars is called THEN the next page is retrieved")
-    void getHistoricalBarsWithToken() {
-
+    @DisplayName("getHistoricalBars: with page token -> next page is retrieved")
+    void getHistoricalBars_withPageToken_nextPageRetrieved() {
         mockRestServiceServer.expect(requestTo(startsWith(uri)))
                 .andExpect(queryParam("symbols", "AAVE/USD"))
                 .andExpect(queryParam("page_token", ""))
                 .andRespond(withSuccess(BARS_RESPONSE_BODY_WITH_TOKEN, MediaType.APPLICATION_JSON));
-
         mockRestServiceServer.expect(requestTo(startsWith(uri)))
                 .andExpect(queryParam("symbols", "AAVE/USD"))
                 .andExpect(queryParam("page_token", "AZERTY1234567890"))
@@ -85,22 +85,48 @@ class BarServiceTest {
     }
 
     @Test
-    @DisplayName("BarTimeFrame nominal and error casting from labels")
-    void barTimeFrameFromLabel() {
+    @DisplayName("getHistoricalBars: error -> empty list & logged error")
+    void getHistoricalBars_error_emptyListAndLoggedError() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(queryParam("symbols", "AAVE/USD"))
+                .andExpect(queryParam("page_token", ""))
+                .andRespond(withStatus(HttpStatus.FORBIDDEN)
+                        .body("{\"message\":\"Forbidden\"}")
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        List<BarModel> barModels = barService.getHistoricalBars("AAVE/USD", BarTimeFrame.DAY1, 1, PeriodLengthUnit.WEEK);
+
+        assertNotNull(barModels);
+        assertTrue(barModels.isEmpty());
+    }
+
+    @Test
+    @DisplayName("BarTimeFrame.fromLabel: nominal -> enum matched")
+    void barTimeFrameFromLabel_nominal_enumMatched() {
         assertEquals(BarTimeFrame.HOUR3, BarTimeFrame.fromLabel("3Hour"));
+    }
+
+    @Test
+    @DisplayName("BarTimeFrame.fromLabel: wrong label -> exception thrown")
+    void barTimeFrameFromLabel_wrongLabel_exceptionThrown() {
         assertThrows(IllegalArgumentException.class, () -> BarTimeFrame.fromLabel("wrong label"));
     }
 
     @Test
-    @DisplayName("PeriodLengthUnit nominal and error casting from labels")
-    void periodLengthUnitFromLabel() {
+    @DisplayName("PeriodLengthUnit.fromLabel: nominal -> enum matched")
+    void periodLengthUnitFromLabel_nominal_enumMatched() {
         assertEquals(PeriodLengthUnit.DAY, PeriodLengthUnit.fromLabel("Day"));
+    }
+
+    @Test
+    @DisplayName("PeriodLengthUnit.fromLabel: wrong label -> exception thrown")
+    void periodLengthUnitFromLabel_wrongLabel_exceptionThrown() {
         assertThrows(IllegalArgumentException.class, () -> PeriodLengthUnit.fromLabel("wrong label"));
     }
 
     @Test
-    @DisplayName("Each goBackInTime method in PeriodLengthUnit is correct")
-    void periodLengthUnitGoBackInTime() {
+    @DisplayName("PeriodLengthUnit.goBackInTime: nominal for each period -> new date correct")
+    void periodLengthUnitGoBackInTime_nominalForEachPeriod_newDateCorrect() {
         OffsetDateTime start = OffsetDateTime.of(LocalDateTime.of(2024, 12, 25, 13, 54), ZoneOffset.ofHours(2));
         assertEquals("2024-12-25T13:44:00+02:00", PeriodLengthUnit.MIN.goBackInTime(start, 10));
         assertEquals("2024-12-25T10:54:00+02:00", PeriodLengthUnit.HOUR.goBackInTime(start, 3));

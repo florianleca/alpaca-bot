@@ -14,12 +14,11 @@ import org.springframework.web.client.RestClient;
 @Service
 public class OrderService {
 
-    @Value("${ALPACA_API_ORDERS_URI}")
-    private String uri;
-
-    private final Logger logger = LoggerFactory.getLogger(OrderService.class);
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
+    private final Logger logger = LoggerFactory.getLogger(OrderService.class);
+    @Value("${ALPACA_API_ORDERS_URI}")
+    private String uri;
 
     public OrderService(RestClient restClient, ObjectMapper objectMapper) {
         this.restClient = restClient;

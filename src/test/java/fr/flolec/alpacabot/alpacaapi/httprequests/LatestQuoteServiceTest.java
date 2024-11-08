@@ -2,19 +2,26 @@ package fr.flolec.alpacabot.alpacaapi.httprequests;
 
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.latestquote.LatestQuoteService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.queryParam;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @RestClientTest(LatestQuoteService.class)
@@ -34,17 +41,43 @@ class LatestQuoteServiceTest {
     @Autowired
     private MockRestServiceServer mockRestServiceServer;
 
+    @Mock
+    private Logger logger;
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(latestQuoteService, "logger", logger);
+    }
+
     @Test
-    @DisplayName("The latest quote of an asset is retrieved correctly")
-    void getLatestQuote() {
+    @DisplayName("getLatestQuote: nominal -> latest quote retrieved")
+    void getLatestQuote_nominal_latestQuoteRetrieved() {
         mockRestServiceServer.expect(requestTo(startsWith(uri)))
                 .andExpect(queryParam("symbols", "AAVE/USD"))
                 .andRespond(withSuccess(LATEST_QUOTE_RESPONSE_BODY_EXAMPLE, MediaType.APPLICATION_JSON));
-
         AssetModel asset = new AssetModel();
         asset.setSymbol("AAVE/USD");
+
         double latestQuote = latestQuoteService.getLatestQuote(asset);
+
         assertEquals(110.5, latestQuote);
+    }
+
+    @Test
+    @DisplayName("getLatestQuote: error -> null quote & logged error")
+    void getLatestQuote_error_nullQuoteAndLoggedError() {
+        mockRestServiceServer.expect(requestTo(startsWith(uri)))
+                .andExpect(queryParam("symbols", "AAVE/USD"))
+                .andRespond(withStatus(HttpStatus.FORBIDDEN)
+                        .body("{\"message\":\"Forbidden\"}")
+                        .contentType(MediaType.APPLICATION_JSON));
+        AssetModel asset = new AssetModel();
+        asset.setSymbol("AAVE/USD");
+
+        Double latestQuote = latestQuoteService.getLatestQuote(asset);
+
+        assertEquals(0, latestQuote);
+        verify(logger).warn("Latest quote of {} could not be retrieved: {}", "AAVE/USD", "403 Forbidden: \"{\"message\":\"Forbidden\"}\"");
     }
 
 }

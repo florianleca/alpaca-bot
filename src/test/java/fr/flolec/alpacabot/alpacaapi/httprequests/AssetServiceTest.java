@@ -2,13 +2,19 @@ package fr.flolec.alpacabot.alpacaapi.httprequests;
 
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 
 import java.util.ArrayList;
@@ -17,7 +23,9 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @RestClientTest(AssetService.class)
@@ -37,10 +45,21 @@ class AssetServiceTest {
     @Autowired
     private MockRestServiceServer mockRestServiceServer;
 
+    @Mock
+    private Logger logger;
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(assetService, "logger", logger);
+    }
+
     @Test
-    @DisplayName("Assets are retrieved and serialized correctly")
-    void getAssetsList() {
-        mockRestServiceServer.expect(requestTo(startsWith(uri)))
+    @DisplayName("getAssetsList: nominal -> assets list retrieved & deserialized")
+    void getAssetsList_nominal_assetsListRetrievedAndDeserialized() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(startsWith(uri)))
+                .andExpect(queryParam("status", "active"))
+                .andExpect(queryParam("exchange", "CRYPTO"))
                 .andRespond(withSuccess(ASSETS_LIST_RESPONSE_BODY_EXAMPLE, MediaType.APPLICATION_JSON));
 
         List<AssetModel> assetsList = assetService.getAssetsList();
@@ -62,9 +81,28 @@ class AssetServiceTest {
         assertEquals("0.01", assetModel.getPriceIncrement());
     }
 
-    @DisplayName("Only assets in USD are kept")
     @Test
-    void selectUsdAssets() {
+    @DisplayName("getAssetsList: error -> empty list & logged error")
+    void getAssetsList_error_emptyListAndLoggedError() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(startsWith(uri)))
+                .andExpect(queryParam("status", "active"))
+                .andExpect(queryParam("exchange", "CRYPTO"))
+                .andRespond(withStatus(HttpStatus.FORBIDDEN)
+                        .body("{\"message\":\"Forbidden\"}")
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        List<AssetModel> assetsList = assetService.getAssetsList();
+
+        assertNotNull(assetsList);
+        assertEquals(0, assetsList.size());
+        verify(logger).warn("Assets list could not be retrieved: {}", "403 Forbidden: \"{\"message\":\"Forbidden\"}\"");
+    }
+
+
+    @Test
+    @DisplayName("selectUSDAssets: list of various assets -> list of USD assets")
+    void selectUSDAssets_listOfVariousAssets_listOfUsdAssets() {
         AssetModel assetModel1 = new AssetModel();
         assetModel1.setName("Bitcoin / US Dollar");
         AssetModel assetModel2 = new AssetModel();
@@ -73,10 +111,10 @@ class AssetServiceTest {
         assetModel3.setName("Bitcoin / Dollar");
         AssetModel assetModel4 = new AssetModel();
         assetModel4.setName("Bitcoin / USD");
-
         List<AssetModel> assetModels = new ArrayList<>(Arrays.asList(assetModel1, assetModel2, assetModel3, assetModel4));
-        assertEquals(4, assetModels.size());
+
         assetService.selectUSDAssets(assetModels);
+
         assertEquals(1, assetModels.size());
         assertTrue(assetModels.contains(assetModel1));
     }

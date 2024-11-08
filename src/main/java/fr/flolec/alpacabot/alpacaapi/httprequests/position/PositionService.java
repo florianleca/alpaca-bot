@@ -24,9 +24,9 @@ public class PositionService {
 
     private final RestClient restClient;
     private final Logger logger = LoggerFactory.getLogger(PositionService.class);
-
     @Value("${ALPACA_API_POSITIONS_URI}")
     private String uri;
+
 
     public PositionService(RestClient restClient) {
         this.restClient = restClient;

@@ -3,13 +3,15 @@ package fr.flolec.alpacabot.alpacaapi.httprequests.bar;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,13 +22,13 @@ import java.util.Map;
 public class BarService {
 
     private final RestClient restClient;
+    private final Logger logger = LoggerFactory.getLogger(BarService.class);
     @Value("${ALPACA_DATA_BARS_URI}")
     private String uri;
 
     public BarService(RestClient restClient) {
         this.restClient = restClient;
     }
-
 
     /**
      * @param assetSymbol      The asset of which we want to retrieve the bars
@@ -39,7 +41,15 @@ public class BarService {
         List<BarModel> bars = new ArrayList<>();
         String nextPageToken = "";
 
-        do {
+        while (nextPageToken != null) {
+            nextPageToken = getHistoricalBarsPage(assetSymbol, barTimeFrame, periodLength, periodLengthUnit, nextPageToken, bars);
+        }
+
+        return bars;
+    }
+
+    private String getHistoricalBarsPage(String assetSymbol, BarTimeFrame barTimeFrame, long periodLength, PeriodLengthUnit periodLengthUnit, String nextPageToken, List<BarModel> bars) {
+        try {
             ResponseEntity<HistoricalBarsResponse> response = restClient.get()
                     .uri(UriComponentsBuilder
                             .fromUriString(uri)
@@ -52,11 +62,15 @@ public class BarService {
                     .toEntity(HistoricalBarsResponse.class);
 
             HistoricalBarsResponse historicalBarsResponse = response.getBody();
-            bars.addAll(historicalBarsResponse.getBars().get(assetSymbol));
-            nextPageToken = historicalBarsResponse.getNextPageToken();
-        } while (nextPageToken != null);
-
-        return bars;
+            if (historicalBarsResponse != null) {
+                bars.addAll(historicalBarsResponse.getBars().get(assetSymbol));
+                return historicalBarsResponse.getNextPageToken();
+            }
+        } catch (HttpStatusCodeException e) {
+            logger.warn("Historical bars for {} could not be retrieved: {}", assetSymbol, e.getMessage());
+        }
+        bars.clear();
+        return null;
     }
 
     @Getter

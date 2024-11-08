@@ -2,21 +2,29 @@ package fr.flolec.alpacabot.alpacaapi.httprequests;
 
 import fr.flolec.alpacabot.alpacaapi.httprequests.accountdetails.AccountDetailsModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.accountdetails.AccountDetailsService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 
 import java.time.Instant;
 import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @RestClientTest(AccountDetailsService.class)
@@ -36,10 +44,19 @@ class AccountDetailsServiceTest {
     @Autowired
     private MockRestServiceServer mockRestServiceServer;
 
+    @Mock
+    private Logger logger;
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(accountDetailsService, "logger", logger);
+    }
+
     @Test
-    @DisplayName("Account details are retrieved and serialized correctly")
-    void testGetAccountDetails() {
-        mockRestServiceServer.expect(requestTo(uri))
+    @DisplayName("getAccountDetails: nominal -> account details retrieved")
+    void getAccountDetails_nominal_accountDetailsRetrieved() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(uri))
                 .andRespond(withSuccess(ACCOUNT_RESPONSE_BODY_EXAMPLE, MediaType.APPLICATION_JSON));
 
         AccountDetailsModel actualAccountDetails = accountDetailsService.getAccountDetails();
@@ -57,6 +74,21 @@ class AccountDetailsServiceTest {
         assertEquals(false, actualAccountDetails.getAccountBlocked());
         assertEquals(Date.from(Instant.parse("2024-03-26T12:42:33.070311Z")), actualAccountDetails.getCreatedAt());
         assertEquals("98.5", actualAccountDetails.getEquity());
+    }
+
+    @Test
+    @DisplayName("getAccountDetails: error -> nothing retrieved & logged error")
+    void getAccountDetails_error_nothingRetrievedAndLoggedError() {
+        mockRestServiceServer.expect(method(HttpMethod.GET))
+                .andExpect(requestTo(uri))
+                .andRespond(withStatus(HttpStatus.FORBIDDEN)
+                        .body("{\"message\":\"Forbidden\"}")
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        AccountDetailsModel actualAccountDetails = accountDetailsService.getAccountDetails();
+
+        assertNull(actualAccountDetails);
+        verify(logger).warn("Account details could not be retrieved: {}", "403 Forbidden: \"{\"message\":\"Forbidden\"}\"");
     }
 
 }
