@@ -18,7 +18,6 @@ public class AverageIndicator extends CachedIndicator<Num> {
 
     @Override
     protected Num calculate(int index) {
-        if (index < getUnstableBars()) return null;
         return indicator1.getValue(index).plus(indicator2.getValue(index)).dividedBy(DecimalNum.valueOf(2));
     }
 

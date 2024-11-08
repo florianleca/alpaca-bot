@@ -22,8 +22,6 @@ public class SqueezeIndicator extends CachedIndicator<Boolean> {
     @Override
     @Nullable
     public Boolean calculate(int index) {
-        if (index < getUnstableBars()) return null;
-
         double lowerBB = bollingerBandFacade.lower().getValue(index).doubleValue();
         double upperBB = bollingerBandFacade.upper().getValue(index).doubleValue();
         double lowerKC = keltnerChannelFacade.lower().getValue(index).doubleValue();

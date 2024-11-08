@@ -13,7 +13,7 @@ public class SqueezeCountIndicator extends CachedIndicator<Integer> {
 
     @Override
     protected Integer calculate(int i) {
-        if (i < getUnstableBars()) return null;
+        if (i < 0) return null;
         if (squeezeIndicator.getValue(i) == null || !squeezeIndicator.getValue(i)) return 0;
         Integer previous = calculate(i - 1);
         if (previous == null) return null;
@@ -24,6 +24,5 @@ public class SqueezeCountIndicator extends CachedIndicator<Integer> {
     public int getUnstableBars() {
         return squeezeIndicator.getUnstableBars();
     }
-    // TODO: en vrai, est-ce que ce ne serait pas jusqu'au premier sqOn post squeezeIndicator.getUnstableBars() ?
 
 }

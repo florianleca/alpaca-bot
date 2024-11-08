@@ -49,7 +49,6 @@ public class SqueezeMomentumStrategyBuilder implements StrategyBuilder {
     }
 
     public Strategy buildStrategy(BarSeries series) {
-
         initIndicators(series);
 
         // Au-dessus d’une 200 EMA
@@ -72,7 +71,8 @@ public class SqueezeMomentumStrategyBuilder implements StrategyBuilder {
         // Règle de vente
         Rule exitRule = limeGreen.negation();
 
-        return new BaseStrategy(entryRule, exitRule);
+        int unstableBars = Math.max(squeezeReleaseIndicator.getUnstableBars(), momentumIndicator.getUnstableBars());
+        return new BaseStrategy("Squeeze Momentum", entryRule, exitRule, unstableBars);
     }
 
     private void initIndicators(BarSeries series) {

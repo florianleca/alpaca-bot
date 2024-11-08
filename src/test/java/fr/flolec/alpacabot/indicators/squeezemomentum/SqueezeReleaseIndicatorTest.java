@@ -31,9 +31,6 @@ class SqueezeReleaseIndicatorTest {
     void calculate() {
         List<Integer> expected = new ArrayList<>(Arrays.asList(42, 66, 88, 122, 163, 256, 305, 328, 352, 387, 431, 456, 499, 539, 638, 686));
 
-        // Valeurs instables
-        for (int i = 0; i <= 19; i++) assertFalse(squeezeReleaseIndicator.getValue(i));
-
         // Valeurs stables
         for (int i = 20; i < barSeries.getBarCount(); i++) {
             if (expected.contains(i)) assertTrue(squeezeReleaseIndicator.getValue(i));
