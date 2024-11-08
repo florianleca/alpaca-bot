@@ -20,13 +20,9 @@ public class MomentumIndicator extends CachedIndicator<Num> {
         this.lengthKC = lengthKC;
     }
 
+    // val = linreg(source  -  avg(avg(highest(high, lengthKC), lowest(low, lengthKC)), sma(close, lengthKC)), lengthKC, 0)
     @Override
     protected Num calculate(int i) {
-
-        if (i < getUnstableBars()) return null;
-
-        // val = linreg(source  -  avg(avg(highest(high, lengthKC), lowest(low, lengthKC)), sma(close, lengthKC)), lengthKC, 0)
-
         // val = linreg(source  -  avg(avg(highPrice, lowPrice), sma(close, lengthKC)), lengthKC, 0)
         HighestValueIndicator highPrice = new HighestValueIndicator(new HighPriceIndicator(series), lengthKC);
         LowestValueIndicator lowPrice = new LowestValueIndicator(new LowPriceIndicator(series), lengthKC);

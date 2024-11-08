@@ -17,7 +17,6 @@ public class DifferenceIndicator extends CachedIndicator<Num> {
 
     @Override
     protected Num calculate(int index) {
-        if (index < getUnstableBars()) return null;
         return indicator1.getValue(index).minus(indicator2.getValue(index));
     }
 

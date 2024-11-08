@@ -11,7 +11,6 @@ public class CustomKeltnerChannelFacade {
     private final NumericIndicator lower;
 
     public CustomKeltnerChannelFacade(BarSeries series, int lengthKC, Number multKC) {
-
         // source = close
         NumericIndicator source = NumericIndicator.of(new ClosePriceIndicator(series));
 

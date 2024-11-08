@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 class SqueezeIndicatorTest {
 
@@ -30,9 +29,6 @@ class SqueezeIndicatorTest {
         for(int i = 0; i < barSeries.getBarCount(); i++) {
             values.add(squeezeIndicator.getValue(i));
         }
-
-        // Valeurs instables
-        for(int i = 0; i <= 19; i++) assertNull(values.get(i));
 
         // Après 20mn (lengthBB/KC) les valeurs sont stables
         for(int i = 20; i <= 37; i++) assertEquals(false, values.get(i));

@@ -18,7 +18,6 @@ public class SqueezeReleaseIndicator extends CachedIndicator<Boolean> {
     @Override
     @Nullable
     protected Boolean calculate(int i) {
-        if (i < getUnstableBars()) return false;
         Integer squeezeCount = squeezeCountIndicator.getValue(i);
         Integer previousSqueezeCount = squeezeCountIndicator.getValue(i - 1);
         if (squeezeCount == null || previousSqueezeCount == null) return false;

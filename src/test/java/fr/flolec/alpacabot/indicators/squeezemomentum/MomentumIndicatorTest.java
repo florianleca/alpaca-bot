@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 class MomentumIndicatorTest {
 
@@ -34,11 +33,6 @@ class MomentumIndicatorTest {
     void calculate() {
         List<Num> values = new ArrayList<>();
         for (int i = 0; i < barSeries.getBarCount(); i++) values.add(momentumIndicator.getValue(i));
-
-        // Valeurs instables
-        for (int i = 0; i < 2 * lengthKC; i++) {
-            assertNull(values.get(i));
-        }
 
         // Après 40mn (2 * lengthKC) les valeurs sont stables
         double[] expectedValues = {-400.14, -608.66, -792.00, -964.43, -1118.84, -1337.80, -1649.85, -1867.97, -2095.79, -2251.58};
