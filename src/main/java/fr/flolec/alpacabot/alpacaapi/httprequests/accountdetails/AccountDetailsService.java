@@ -1,41 +1,39 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests.accountdetails;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.flolec.alpacabot.alpacaapi.httprequests.HttpRequestService;
-import okhttp3.Response;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClient;
 
 @Component
 public class AccountDetailsService {
 
+    @Value("${ALPACA_API_ACCOUNT_URI}")
+    private String uri;
+    private final RestClient restClient;
+    private final Logger logger = LoggerFactory.getLogger(AccountDetailsService.class);
 
-    private final String endpoint;
-    private final ObjectMapper objectMapper;
-    private final HttpRequestService httpRequestService;
-
-    @Autowired
-    public AccountDetailsService(@Value("${PAPER_ACCOUNT_ENDPOINT}") String endpoint,
-                                 ObjectMapper objectMapper,
-                                 HttpRequestService httpRequestService) {
-        this.endpoint = endpoint;
-        this.objectMapper = objectMapper;
-        this.httpRequestService = httpRequestService;
+    public AccountDetailsService(RestClient restClient) {
+        this.restClient = restClient;
     }
 
     /**
      * @return Details of account linked to given keys
-     * @throws IOException If an I/O error occurs while fetching or processing the data
      */
-    public AccountDetailsModel getAccountDetails() throws IOException {
-        Response response = httpRequestService.get(endpoint);
-        assert response.body() != null;
-        JsonNode jsonNode = objectMapper.readTree(response.body().string());
-        return objectMapper.treeToValue(jsonNode, AccountDetailsModel.class);
+    public AccountDetailsModel getAccountDetails() {
+        try {
+            ResponseEntity<AccountDetailsModel> response = restClient.get()
+                    .uri(uri)
+                    .retrieve()
+                    .toEntity(AccountDetailsModel.class);
+            return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            logger.warn("Account details could not be retrieved: {}", e.getMessage());
+            return null;
+        }
     }
 
 }

@@ -1,41 +1,35 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests.position;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.flolec.alpacabot.alpacaapi.httprequests.HttpRequestService;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import fr.flolec.alpacabot.alpacaapi.httprequests.order.OrderModel;
-import okhttp3.HttpUrl;
-import okhttp3.Response;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static java.util.Objects.requireNonNull;
-
 @Component
 public class PositionService {
 
-    public static final String MESSAGE = "message";
-    private final String endpoint;
-    private final ObjectMapper objectMapper;
-    private final HttpRequestService httpRequestService;
+    private final RestClient restClient;
     private final Logger logger = LoggerFactory.getLogger(PositionService.class);
+    @Value("${ALPACA_API_POSITIONS_URI}")
+    private String uri;
 
-    @Autowired
-    public PositionService(@Value("${PAPER_POSITIONS_ENDPOINT}") String endpoint,
-                           ObjectMapper objectMapper,
-                           HttpRequestService httpRequestService) {
-        this.endpoint = endpoint;
-        this.objectMapper = objectMapper;
-        this.httpRequestService = httpRequestService;
+
+    public PositionService(RestClient restClient) {
+        this.restClient = restClient;
     }
 
     public String takeSlashOutOfSymbol(String symbol) {
@@ -46,92 +40,118 @@ public class PositionService {
         return symbol;
     }
 
-    public PositionModel getAnOpenPosition(String symbol) throws IOException {
-        symbol = takeSlashOutOfSymbol(symbol);
-        Response response = httpRequestService.get(endpoint + "/" + symbol);
-        assert response.body() != null;
-
-        if (!response.isSuccessful()) {
-            String errorMessage = objectMapper.readTree(response.body().string()).get(MESSAGE).asText();
-            logger.warn("Position couldn't be retrieved: '{}' (code {})", errorMessage, response.code());
+    public PositionModel getAnOpenPosition(String symbol) {
+        try {
+            symbol = takeSlashOutOfSymbol(symbol);
+            ResponseEntity<PositionModel> response = restClient.get()
+                    .uri(uri + "/" + symbol)
+                    .retrieve()
+                    .toEntity(PositionModel.class);
+            return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            logger.warn("{} position could not be retrieved: {}", symbol, e.getMessage());
             return null;
         }
-
-        String bodyString = response.body().string();
-        JsonNode jsonNode = objectMapper.readTree(bodyString);
-        return objectMapper.treeToValue(jsonNode, PositionModel.class);
     }
 
-    public List<PositionModel> getAllOpenPositions() throws IOException {
-        Response response = httpRequestService.get(endpoint);
-        assert response.body() != null;
-        JsonNode jsonNode = objectMapper.readTree(response.body().string());
-        return objectMapper.treeToValue(jsonNode, new TypeReference<>() {
-        });
+    public List<PositionModel> getAllOpenPositions() {
+        try {
+            ResponseEntity<List<PositionModel>> response = restClient.get()
+                    .uri(uri)
+                    .retrieve()
+                    .toEntity(new ParameterizedTypeReference<>() {
+                    });
+            return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            logger.warn("All open positions could not be retrieved: {}", e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
-    public double getCurrentQtyOfAsset(String symbol) throws IOException {
+    public double getCurrentQtyOfAsset(String symbol) {
         PositionModel assetCurrentPosition = getAnOpenPosition(symbol);
-        if (assetCurrentPosition.getQuantity() == null) return 0;
+        if (assetCurrentPosition == null || assetCurrentPosition.getQuantity() == null) return 0;
         else return Double.parseDouble(assetCurrentPosition.getQuantity());
     }
 
-
     // Liquidate = sell order at market price
-    public OrderModel liquidatePositionByPercentage(String symbol, double percentage) throws IOException {
-        symbol = takeSlashOutOfSymbol(symbol);
-        String url = requireNonNull(HttpUrl.parse(endpoint + "/" + symbol)).newBuilder()
-                .addQueryParameter("percentage", String.format(Locale.US, "%.9f", percentage))
-                .toString();
-        return liquidatePosition(url);
-    }
-
-    public OrderModel liquidatePositionByQuantity(String symbol, double coinQuantity) throws IOException {
-        symbol = takeSlashOutOfSymbol(symbol);
-        String url = requireNonNull(HttpUrl.parse(endpoint + "/" + symbol)).newBuilder()
-                .addQueryParameter("qty", String.format(Locale.US, "%.9f", coinQuantity))
-                .toString();
-        return liquidatePosition(url);
-    }
-
-    public OrderModel liquidatePosition(String url) throws IOException {
-        Response response;
-        JsonNode jsonNode;
-        response = httpRequestService.delete(url);
-        assert response.body() != null;
-
-        if (!response.isSuccessful()) {
-            String errorMessage = objectMapper.readTree(response.body().string()).get(MESSAGE).asText();
-            logger.warn("Position couldn't be liquidated: '{}' (code {})", errorMessage, response.code());
+    public OrderModel liquidatePositionByPercentage(String symbol, double percentage) {
+        try {
+            symbol = takeSlashOutOfSymbol(symbol);
+            ResponseEntity<OrderModel> response = restClient.delete()
+                    .uri(UriComponentsBuilder
+                            .fromUriString(uri + "/" + symbol)
+                            .queryParam("percentage", String.format(Locale.US, "%.9f", percentage))
+                            .toUriString())
+                    .retrieve()
+                    .toEntity(OrderModel.class);
+            return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            logger.warn("{} position could not be liquidated by percentage: {}", symbol, e.getMessage());
             return null;
         }
-
-        String responseString = response.body().string();
-        jsonNode = objectMapper.readTree(responseString);
-        return objectMapper.treeToValue(jsonNode, OrderModel.class);
     }
 
-    public List<OrderModel> liquidateAllPositions() throws IOException {
-        Response response;
-        String url = requireNonNull(HttpUrl.parse(endpoint)).newBuilder()
-                .addQueryParameter("cancel_orders", "true")
-                .toString();
-        response = httpRequestService.delete(url);
-        assert response.body() != null;
+    public OrderModel liquidatePositionByQuantity(String symbol, double coinQuantity) {
+        try {
+            symbol = takeSlashOutOfSymbol(symbol);
+            ResponseEntity<OrderModel> response = restClient.delete()
+                    .uri(UriComponentsBuilder
+                            .fromUriString(uri + "/" + symbol)
+                            .queryParam("qty", String.format(Locale.US, "%.9f", coinQuantity))
+                            .toUriString())
+                    .retrieve()
+                    .toEntity(OrderModel.class);
+            return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            logger.warn("{} position could not be liquidated by quantity: {}", symbol, e.getMessage());
+            return null;
+        }
+    }
 
-        if (!response.isSuccessful()) {
-            String errorMessage = objectMapper.readTree(response.body().string()).get(MESSAGE).asText();
-            logger.warn("Positions couldn't be liquidated: '{}' (code {})", errorMessage, response.code());
+    public OrderModel liquidatePosition(String symbol) {
+        try {
+            symbol = takeSlashOutOfSymbol(symbol);
+            ResponseEntity<OrderModel> response = restClient.delete()
+                    .uri(UriComponentsBuilder
+                            .fromUriString(uri + "/" + symbol)
+                            .toUriString())
+                    .retrieve()
+                    .toEntity(OrderModel.class);
+            return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            logger.warn("{} position could not be liquidated: {}", symbol, e.getMessage());
+            return null;
+        }
+    }
+
+    public List<OrderModel> liquidateAllPositions(boolean cancelOrders) {
+        try {
+            ResponseEntity<List<MultipleOrders>> response = restClient.delete()
+                    .uri(UriComponentsBuilder
+                            .fromUriString(uri)
+                            .queryParam("cancel_orders", cancelOrders)
+                            .toUriString())
+                    .retrieve()
+                    .toEntity(new ParameterizedTypeReference<>() {
+                    });
+            assert response.getBody() != null;
+            return response.getBody().stream().map(MultipleOrders::getOrder).toList();
+        } catch (HttpStatusCodeException e) {
+            logger.warn("All positions could not be liquidated: {}", e.getMessage());
             return new ArrayList<>();
         }
-        JsonNode jsonNode = objectMapper.readTree(response.body().string());
-        List<OrderModel> orderModels = new ArrayList<>();
-        for (JsonNode node : jsonNode) {
-            JsonNode bodyNode = node.get("body");
-            OrderModel orderModel = objectMapper.treeToValue(bodyNode, OrderModel.class);
-            orderModels.add(orderModel);
-        }
-        return orderModels;
+
+    }
+
+    @Getter
+    @Setter
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class MultipleOrders {
+
+        @JsonProperty("body")
+        private OrderModel order;
+
     }
 
 }
