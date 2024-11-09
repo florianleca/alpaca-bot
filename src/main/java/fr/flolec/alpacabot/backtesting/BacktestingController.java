@@ -6,8 +6,6 @@ import fr.flolec.alpacabot.strategies.StrategyEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-
 @RestController
 @RequestMapping("/backtesting")
 public class BacktestingController {
@@ -21,11 +19,12 @@ public class BacktestingController {
 
     @GetMapping("{strategy}")
     public BacktestResult backtesting(@PathVariable("strategy") StrategyEnum strategy,
-                              @RequestParam("symbol") String symbol,
-                              @RequestParam("periodLength") int periodLength,
-                              @RequestParam("periodLengthUnit") PeriodLengthUnit periodLengthUnit,
-                              @RequestParam("timeFrame") BarTimeFrame barTimeFrame) throws IOException {
-        return backtestingService.backtesting(strategy, symbol, periodLength, periodLengthUnit, barTimeFrame);
+                                      @RequestParam("symbol") String symbol,
+                                      @RequestParam("periodLength") int periodLength,
+                                      @RequestParam("periodLengthUnit") PeriodLengthUnit periodLengthUnit,
+                                      @RequestParam("timeFrame") BarTimeFrame barTimeFrame,
+                                      @RequestParam("isCrypto") boolean isCrypto) {
+        return backtestingService.backtesting(strategy, symbol, periodLength, periodLengthUnit, barTimeFrame, isCrypto);
     }
 
 }

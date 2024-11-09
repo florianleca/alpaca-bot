@@ -27,7 +27,6 @@ public class PositionService {
     @Value("${ALPACA_API_POSITIONS_URI}")
     private String uri;
 
-
     public PositionService(RestClient restClient) {
         this.restClient = restClient;
     }
@@ -40,9 +39,9 @@ public class PositionService {
         return symbol;
     }
 
-    public PositionModel getAnOpenPosition(String symbol) {
+    public PositionModel getAnOpenPosition(String symbol, boolean isCrypto) {
+        if (isCrypto) symbol = takeSlashOutOfSymbol(symbol);
         try {
-            symbol = takeSlashOutOfSymbol(symbol);
             ResponseEntity<PositionModel> response = restClient.get()
                     .uri(uri + "/" + symbol)
                     .retrieve()
@@ -68,8 +67,8 @@ public class PositionService {
         }
     }
 
-    public double getCurrentQtyOfAsset(String symbol) {
-        PositionModel assetCurrentPosition = getAnOpenPosition(symbol);
+    public double getCurrentQtyOfAsset(String symbol, boolean isCrypto) {
+        PositionModel assetCurrentPosition = getAnOpenPosition(symbol, isCrypto);
         if (assetCurrentPosition == null || assetCurrentPosition.getQuantity() == null) return 0;
         else return Double.parseDouble(assetCurrentPosition.getQuantity());
     }
