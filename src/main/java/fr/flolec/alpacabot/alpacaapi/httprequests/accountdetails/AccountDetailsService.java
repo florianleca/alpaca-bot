@@ -11,10 +11,10 @@ import org.springframework.web.client.RestClient;
 @Component
 public class AccountDetailsService {
 
-    @Value("${ALPACA_API_ACCOUNT_URI}")
-    private String uri;
     private final RestClient restClient;
     private final Logger logger = LoggerFactory.getLogger(AccountDetailsService.class);
+    @Value("${ALPACA_API_ACCOUNT_URI}")
+    private String uri;
 
     public AccountDetailsService(RestClient restClient) {
         this.restClient = restClient;

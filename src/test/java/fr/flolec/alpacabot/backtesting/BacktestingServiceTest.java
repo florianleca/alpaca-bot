@@ -1,8 +1,8 @@
 package fr.flolec.alpacabot.backtesting;
 
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarService;
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarTimeFrame;
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.PeriodLengthUnit;
+import fr.flolec.alpacabot.alpacaapi.httprequests.bar.historicalbar.HistoricalBarService;
 import fr.flolec.alpacabot.strategies.StrategyEnum;
 import fr.flolec.alpacabot.strategies.squeezemomentum.SqueezeMomentumStrategyBuilder;
 import fr.flolec.alpacabot.strategies.utils.BarsUtils;
@@ -23,8 +23,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,7 +31,7 @@ import static org.mockito.Mockito.when;
 class BacktestingServiceTest {
 
     @Mock
-    private BarService barService;
+    private HistoricalBarService historicalBarService;
 
     @Mock
     private ApplicationContext applicationContext;
@@ -41,8 +40,8 @@ class BacktestingServiceTest {
     private BacktestingService backtestingService;
 
     @Test
-    void backtesting() throws IOException {
-        when(barService.getHistoricalBars(any(), any(), anyLong(), any())).thenReturn(new ArrayList<>());
+    void backtesting() {
+        when(historicalBarService.getHistoricalBars(any(), any(), anyLong(), any(), anyBoolean())).thenReturn(new ArrayList<>());
         when(applicationContext.getBean(SqueezeMomentumStrategyBuilder.class)).thenReturn(new SqueezeMomentumStrategyBuilder(20, 2.0, 20, 1.5, 6));
 
         BacktestResult backtestResult = backtestingService.backtesting(
@@ -50,9 +49,10 @@ class BacktestingServiceTest {
                 "TEST/USD",
                 1,
                 PeriodLengthUnit.MONTH,
-                BarTimeFrame.HOUR1);
+                BarTimeFrame.HOUR1,
+                true);
 
-        verify(barService).getHistoricalBars("TEST/USD", BarTimeFrame.HOUR1, 1, PeriodLengthUnit.MONTH);
+        verify(historicalBarService).getHistoricalBars("TEST/USD", BarTimeFrame.HOUR1, 1, PeriodLengthUnit.MONTH, true);
         verify(applicationContext).getBean(SqueezeMomentumStrategyBuilder.class);
         assertNotNull(backtestResult);
     }

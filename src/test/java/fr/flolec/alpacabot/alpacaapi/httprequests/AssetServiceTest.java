@@ -1,5 +1,6 @@
 package fr.flolec.alpacabot.alpacaapi.httprequests;
 
+import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetClass;
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetModel;
 import fr.flolec.alpacabot.alpacaapi.httprequests.asset.AssetService;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,10 +60,10 @@ class AssetServiceTest {
         mockRestServiceServer.expect(method(HttpMethod.GET))
                 .andExpect(requestTo(startsWith(uri)))
                 .andExpect(queryParam("status", "active"))
-                .andExpect(queryParam("exchange", "CRYPTO"))
+                .andExpect(queryParam("asset_class", "crypto"))
                 .andRespond(withSuccess(ASSETS_LIST_RESPONSE_BODY_EXAMPLE, MediaType.APPLICATION_JSON));
 
-        List<AssetModel> assetsList = assetService.getAssetsList();
+        List<AssetModel> assetsList = assetService.getAssetsList(AssetClass.CRYPTO);
 
         assertNotNull(assetsList);
         assertEquals(19, assetsList.size());
@@ -87,12 +88,12 @@ class AssetServiceTest {
         mockRestServiceServer.expect(method(HttpMethod.GET))
                 .andExpect(requestTo(startsWith(uri)))
                 .andExpect(queryParam("status", "active"))
-                .andExpect(queryParam("exchange", "CRYPTO"))
+                .andExpect(queryParam("asset_class", "crypto"))
                 .andRespond(withStatus(HttpStatus.FORBIDDEN)
                         .body("{\"message\":\"Forbidden\"}")
                         .contentType(MediaType.APPLICATION_JSON));
 
-        List<AssetModel> assetsList = assetService.getAssetsList();
+        List<AssetModel> assetsList = assetService.getAssetsList(AssetClass.CRYPTO);
 
         assertNotNull(assetsList);
         assertEquals(0, assetsList.size());
@@ -105,18 +106,44 @@ class AssetServiceTest {
     void selectUSDAssets_listOfVariousAssets_listOfUsdAssets() {
         AssetModel assetModel1 = new AssetModel();
         assetModel1.setName("Bitcoin / US Dollar");
+        assetModel1.setExchange("CRYPTO");
         AssetModel assetModel2 = new AssetModel();
         assetModel2.setName("Bitcoin / Euro");
+        assetModel2.setExchange("CRYPTO");
         AssetModel assetModel3 = new AssetModel();
         assetModel3.setName("Bitcoin / Dollar");
+        assetModel3.setExchange("CRYPTO");
         AssetModel assetModel4 = new AssetModel();
         assetModel4.setName("Bitcoin / USD");
+        assetModel4.setExchange("CRYPTO");
+
         List<AssetModel> assetModels = new ArrayList<>(Arrays.asList(assetModel1, assetModel2, assetModel3, assetModel4));
 
         assetService.selectUSDAssets(assetModels);
 
         assertEquals(1, assetModels.size());
         assertTrue(assetModels.contains(assetModel1));
+    }
+
+    @Test
+    @DisplayName("selectTradableAssets: list of various assets -> list of tradable assets")
+    void selectTradableAssets_listOfVariousAssets_listOfTradableAssets() {
+        AssetModel assetModel1 = new AssetModel();
+        assetModel1.setTradable(true);
+        AssetModel assetModel2 = new AssetModel();
+        assetModel2.setTradable(false);
+        AssetModel assetModel3 = new AssetModel();
+        assetModel3.setTradable(true);
+        AssetModel assetModel4 = new AssetModel();
+        assetModel4.setTradable(false);
+
+        List<AssetModel> assetModels = new ArrayList<>(Arrays.asList(assetModel1, assetModel2, assetModel3, assetModel4));
+
+        assetService.selectTradableAssets(assetModels);
+
+        assertEquals(2, assetModels.size());
+        assertTrue(assetModels.contains(assetModel1));
+        assertTrue(assetModels.contains(assetModel3));
     }
 
 }

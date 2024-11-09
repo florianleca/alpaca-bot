@@ -30,13 +30,13 @@ public class AssetService {
     /**
      * @return Sorted list of all active crypto assets in USD
      */
-    public List<AssetModel> getAssetsList() {
+    public List<AssetModel> getAssetsList(AssetClass assetClass) {
         try {
             ResponseEntity<List<AssetModel>> response = restClient.get()
                     .uri(UriComponentsBuilder
                             .fromUriString(uri)
                             .queryParam("status", "active")
-                            .queryParam("exchange", "CRYPTO")
+                            .queryParam("asset_class", assetClass.getLabel())
                             .toUriString())
                     .retrieve()
                     .toEntity(new ParameterizedTypeReference<>() {
@@ -44,6 +44,7 @@ public class AssetService {
             List<AssetModel> assets = response.getBody();
             if (assets != null) {
                 selectUSDAssets(assets);
+                selectTradableAssets(assets);
                 return assets.stream().sorted(Comparator.comparing(AssetModel::getName)).toList();
             }
         } catch (HttpStatusCodeException e) {
@@ -53,7 +54,11 @@ public class AssetService {
     }
 
     public void selectUSDAssets(List<AssetModel> assets) {
-        assets.removeIf(asset -> !asset.getName().contains(" / US Dollar"));
+        assets.removeIf(asset -> "CRYPTO".equals(asset.getExchange()) && !asset.getName().contains(" / US Dollar"));
+    }
+
+    public void selectTradableAssets(List<AssetModel> assets) {
+        assets.removeIf(asset -> !asset.getTradable());
     }
 
 }

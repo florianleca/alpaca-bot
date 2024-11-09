@@ -93,7 +93,7 @@ public class PositionServiceTest {
                 .andExpect(requestTo(uri + "/BTCUSD"))
                 .andRespond(withSuccess(RESPONSE_GET_A_POSITION_NOMINAL, MediaType.APPLICATION_JSON));
 
-        PositionModel positionModel = positionService.getAnOpenPosition("BTC/USD");
+        PositionModel positionModel = positionService.getAnOpenPosition("BTC/USD", true);
 
         assertNotNull(positionModel);
         assertEquals("64bbff51-59d6-4b3c-9351-13ad85e3c752", positionModel.getAssetId());
@@ -120,7 +120,7 @@ public class PositionServiceTest {
                         .body(RESPONSE_GET_A_POSITION_ERROR_SYMBOL)
                         .contentType(MediaType.APPLICATION_JSON));
 
-        PositionModel positionModel = positionService.getAnOpenPosition("BTCd/USD");
+        PositionModel positionModel = positionService.getAnOpenPosition("BTCd/USD", true);
 
         assertNull(positionModel);
         verify(logger).warn("{} position could not be retrieved: {}", "BTCdUSD", "404 Not Found: \"{\"code\": 40410000,\"message\": \"symbol not found: BTCdUSD\"}\"");
@@ -135,7 +135,7 @@ public class PositionServiceTest {
                         .body(RESPONSE_GET_A_POSITION_ERROR_NO_POSITION)
                         .contentType(MediaType.APPLICATION_JSON));
 
-        PositionModel positionModel = positionService.getAnOpenPosition("MKR/USD");
+        PositionModel positionModel = positionService.getAnOpenPosition("MKR/USD", true);
 
         assertNull(positionModel);
         verify(logger).warn("{} position could not be retrieved: {}", "MKRUSD", "404 Not Found: \"{\"code\": 40410000, \"message\": \"position does not exist\"}\"");
@@ -207,23 +207,23 @@ public class PositionServiceTest {
     void getCurrentQtyOfAsset_positionExists_quantityRetrieved() {
         PositionModel positionModel = new PositionModel();
         positionModel.setQuantity("123.4");
-        doReturn(positionModel).when(spiedPositionService).getAnOpenPosition("TEST");
-        assertEquals(123.4, spiedPositionService.getCurrentQtyOfAsset("TEST"));
+        doReturn(positionModel).when(spiedPositionService).getAnOpenPosition("TEST", true);
+        assertEquals(123.4, spiedPositionService.getCurrentQtyOfAsset("TEST", true));
     }
 
     @Test
     @DisplayName("getCurrentQtyOfAsset: no position -> 0 quantity")
     void getCurrentQtyOfAsset_noPosition_zeroQuantity() {
-        doReturn(null).when(spiedPositionService).getAnOpenPosition("TEST");
-        assertEquals(0, spiedPositionService.getCurrentQtyOfAsset("TEST"));
+        doReturn(null).when(spiedPositionService).getAnOpenPosition("TEST", true);
+        assertEquals(0, spiedPositionService.getCurrentQtyOfAsset("TEST", true));
     }
 
     @Test
     @DisplayName("getCurrentQtyOfAsset: null quantity -> 0 quantity")
     void getCurrentQtyOfAsset_nullQuantity_zeroQuantity() {
         PositionModel positionModel = new PositionModel();
-        doReturn(positionModel).when(spiedPositionService).getAnOpenPosition("TEST");
-        assertEquals(0, spiedPositionService.getCurrentQtyOfAsset("TEST"));
+        doReturn(positionModel).when(spiedPositionService).getAnOpenPosition("TEST", true);
+        assertEquals(0, spiedPositionService.getCurrentQtyOfAsset("TEST", true));
     }
 
     @Test

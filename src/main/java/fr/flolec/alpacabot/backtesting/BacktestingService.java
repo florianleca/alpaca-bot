@@ -1,9 +1,9 @@
 package fr.flolec.alpacabot.backtesting;
 
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarModel;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarService;
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarTimeFrame;
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.PeriodLengthUnit;
+import fr.flolec.alpacabot.alpacaapi.httprequests.bar.historicalbar.HistoricalBarService;
 import fr.flolec.alpacabot.strategies.StrategyBuilder;
 import fr.flolec.alpacabot.strategies.StrategyEnum;
 import fr.flolec.alpacabot.strategies.utils.BarsUtils;
@@ -15,7 +15,6 @@ import org.ta4j.core.Strategy;
 import org.ta4j.core.TradingRecord;
 import org.ta4j.core.backtest.BarSeriesManager;
 
-import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -23,24 +22,25 @@ public class BacktestingService {
 
     private final ApplicationContext applicationContext;
 
-    private final BarService barService;
+    private final HistoricalBarService historicalBarService;
 
 
     @Autowired
     public BacktestingService(ApplicationContext applicationContext,
-                              BarService barService) {
+                              HistoricalBarService historicalBarService) {
         this.applicationContext = applicationContext;
-        this.barService = barService;
+        this.historicalBarService = historicalBarService;
     }
 
     public BacktestResult backtesting(StrategyEnum strategyEnum,
-                              String symbol,
-                              int periodLength,
-                              PeriodLengthUnit periodLengthUnit,
-                              BarTimeFrame barTimeFrame) throws IOException {
+                                      String symbol,
+                                      int periodLength,
+                                      PeriodLengthUnit periodLengthUnit,
+                                      BarTimeFrame barTimeFrame,
+                                      boolean isCrypto) {
 
         // Get historical bars
-        List<BarModel> rawBars = barService.getHistoricalBars(symbol, barTimeFrame, periodLength, periodLengthUnit);
+        List<BarModel> rawBars = historicalBarService.getHistoricalBars(symbol, barTimeFrame, periodLength, periodLengthUnit, isCrypto);
         BarSeries series = BarsUtils.barModelListToBarSeries(rawBars);
 
         // Build strategy
