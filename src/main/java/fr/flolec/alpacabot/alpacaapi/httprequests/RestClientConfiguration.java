@@ -21,6 +21,7 @@ public class RestClientConfiguration {
         return builder.build();
     }
 
+    // Possibilité de rajouter un intercepteur (ClientHttpRequestInterceptor) pour logger les requêtes
     @Bean
     public RestClientCustomizer restClientCustomizer() {
         return restClientBuilder -> restClientBuilder
