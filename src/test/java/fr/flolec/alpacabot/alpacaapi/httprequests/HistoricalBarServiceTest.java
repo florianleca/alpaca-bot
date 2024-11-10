@@ -49,7 +49,7 @@ class HistoricalBarServiceTest {
     @DisplayName("getHistoricalBars: no page token -> one page retrieved")
     void getHistoricalBars_noPageToken_onePageRetrieved() {
         mockRestServiceServer.expect(requestTo(startsWith(uri)))
-                .andExpect(queryParam("symbols", "AAVE/USD"))
+                .andExpect(queryParam("symbols", "AAVE%2FUSD"))
                 .andRespond(withSuccess(BARS_RESPONSE_BODY_NO_TOKEN, MediaType.APPLICATION_JSON));
 
         List<BarModel> barModels = historicalBarService.getHistoricalBars("AAVE/USD", BarTimeFrame.DAY1, 1, PeriodLengthUnit.WEEK, true);
@@ -70,11 +70,11 @@ class HistoricalBarServiceTest {
     @DisplayName("getHistoricalBars: with page token -> next page is retrieved")
     void getHistoricalBars_withPageToken_nextPageRetrieved() {
         mockRestServiceServer.expect(requestTo(startsWith(uri)))
-                .andExpect(queryParam("symbols", "AAVE/USD"))
+                .andExpect(queryParam("symbols", "AAVE%2FUSD"))
                 .andExpect(queryParam("page_token", ""))
                 .andRespond(withSuccess(BARS_RESPONSE_BODY_WITH_TOKEN, MediaType.APPLICATION_JSON));
         mockRestServiceServer.expect(requestTo(startsWith(uri)))
-                .andExpect(queryParam("symbols", "AAVE/USD"))
+                .andExpect(queryParam("symbols", "AAVE%2FUSD"))
                 .andExpect(queryParam("page_token", "AZERTY1234567890"))
                 .andRespond(withSuccess(BARS_RESPONSE_BODY_NO_TOKEN, MediaType.APPLICATION_JSON));
 
@@ -88,7 +88,7 @@ class HistoricalBarServiceTest {
     @DisplayName("getHistoricalBars: error -> empty list & logged error")
     void getHistoricalBars_error_emptyListAndLoggedError() {
         mockRestServiceServer.expect(method(HttpMethod.GET))
-                .andExpect(queryParam("symbols", "AAVE/USD"))
+                .andExpect(queryParam("symbols", "AAVE%2FUSD"))
                 .andExpect(queryParam("page_token", ""))
                 .andRespond(withStatus(HttpStatus.FORBIDDEN)
                         .body("{\"message\":\"Forbidden\"}")

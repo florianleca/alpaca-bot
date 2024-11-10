@@ -16,6 +16,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,21 +54,24 @@ public class HistoricalBarService {
         String nextPageToken = "";
 
         while (nextPageToken != null) {
-            String uri = isCrypto ? uriCrypto : uriStocks;
-            String completeUri = UriComponentsBuilder
-                    .fromUriString(uri)
-                    .queryParam("symbols", assetSymbol)
-                    .queryParam("timeframe", barTimeFrame.getLabel())
-                    .queryParam("start", periodLengthUnit.goBackInTime(OffsetDateTime.now(), periodLength))
-                    .queryParam("page_token", nextPageToken)
-                    .toUriString();
-            nextPageToken = getHistoricalBarsPage(assetSymbol, completeUri, bars);
+            String baseUri = isCrypto ? uriCrypto : uriStocks;
+            String start = periodLengthUnit.goBackInTime(OffsetDateTime.now(), periodLength);
+
+            URI uri = UriComponentsBuilder
+                    .fromUriString(baseUri)
+                    .queryParam("symbols", "{symbols}")
+                    .queryParam("timeframe", "{timeframe}")
+                    .queryParam("start", "{start}")
+                    .queryParam("page_token", "{page_token}")
+                    .build(assetSymbol, barTimeFrame.getLabel(), start, nextPageToken);
+
+            nextPageToken = getHistoricalBarsPage(assetSymbol, uri, bars);
         }
 
         return bars;
     }
 
-    private String getHistoricalBarsPage(String assetSymbol, String uri, List<BarModel> bars) {
+    private String getHistoricalBarsPage(String assetSymbol, URI uri, List<BarModel> bars) {
         try {
             ResponseEntity<String> response = restClient.get()
                     .uri(uri)
