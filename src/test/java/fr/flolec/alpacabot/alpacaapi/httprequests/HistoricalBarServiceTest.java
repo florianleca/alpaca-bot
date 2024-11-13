@@ -63,7 +63,7 @@ class HistoricalBarServiceTest {
         assertEquals(85.04845, barModel.getLow());
         assertEquals(87.1966, barModel.getOpen());
         assertEquals(360.569480264, barModel.getVolume());
-        assertEquals("2024-05-20T05:00:00Z", barModel.getDate());
+        assertEquals("2024-05-20T05:00:00Z", barModel.getBeginTime());
     }
 
     @Test

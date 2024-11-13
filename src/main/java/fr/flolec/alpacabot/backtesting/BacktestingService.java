@@ -41,7 +41,7 @@ public class BacktestingService {
 
         // Get historical bars
         List<BarModel> rawBars = historicalBarService.getHistoricalBars(symbol, barTimeFrame, periodLength, periodLengthUnit, isCrypto);
-        BarSeries series = BarsUtils.barModelListToBarSeries(rawBars);
+        BarSeries series = BarsUtils.barModelListToBarSeries(rawBars, barTimeFrame);
 
         // Build strategy
         StrategyBuilder bean = (StrategyBuilder) applicationContext.getBean(strategyEnum.getClazz());
