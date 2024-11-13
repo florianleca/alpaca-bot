@@ -28,15 +28,15 @@ public class BarModel {
     private double volume;
 
     @JsonProperty("t")
-    private String date;
+    private String beginTime;
 
-    public BarModel(String date, double close, double high, double low, double open, double volume) {
+    public BarModel(String beginTime, double close, double high, double low, double open, double volume) {
         this.close = close;
         this.high = high;
         this.low = low;
         this.open = open;
         this.volume = volume;
-        this.date = date;
+        this.beginTime = beginTime;
     }
 
 }

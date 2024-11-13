@@ -83,24 +83,5 @@ class BacktestingServiceTest {
         assertEquals(50, positionSummary.getProfit());
         assertTrue(backtestResult.getRoi() > 1);
     }
-    /*
 
-    CSV Binance :
-    OPEN_TIME / open / high / low / close / volume / CLOSE_TIME / ...
-
-    1ère ligne :
-    OPEN :  Thursday 1 August 2024 00:00:00
-    CLOSE : Thursday 1 August 2024 01:00:00
-
-    public BaseBar(
-            Duration timePeriod,
-        --> ZonedDateTime endTime,
-            double openPrice,
-            double highPrice,
-            double lowPrice,
-            double closePrice,
-            double volume
-    )
-
-     */
 }

@@ -1,6 +1,9 @@
 package fr.flolec.alpacabot.strategies.utils;
 
 import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarModel;
+import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarTimeFrame;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.BaseBar;
@@ -10,25 +13,28 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class BarsUtils {
 
+    private static final Logger logger = LoggerFactory.getLogger(BarsUtils.class);
+
+    // Private constructor to prevent instantiation
     private BarsUtils() {
     }
 
-    public static BarSeries barModelListToBarSeries(List<BarModel> rawBars) {
+    public static BarSeries barModelListToBarSeries(List<BarModel> rawBars, BarTimeFrame barTimeFrame) {
         BarSeries barSeries = new BaseBarSeries();
+        rawBars = BarsUtils.sortBarsList(rawBars);
+        rawBars = BarsUtils.removeDuplicatesFromBarsList(rawBars);
         rawBars.forEach(bar -> {
-            ZonedDateTime barDate = ZonedDateTime.parse(bar.getDate());
-            if (barSeries.getBarCount() == 0 || barDate.isAfter(barSeries.getLastBar().getEndTime())) {
-                barSeries.addBar(ZonedDateTime.parse(bar.getDate()), bar.getOpen(), bar.getHigh(), bar.getLow(), bar.getClose(), bar.getVolume());
-            }
+            ZonedDateTime barBeginTime = ZonedDateTime.parse(bar.getBeginTime());
+            ZonedDateTime barEndTime = barBeginTime.plus(barTimeFrame.getTemporalAmount());
+            barSeries.addBar(barEndTime, bar.getOpen(), bar.getHigh(), bar.getLow(), bar.getClose(), bar.getVolume());
         });
         return barSeries;
     }
@@ -65,6 +71,32 @@ public class BarsUtils {
         });
         reader.close();
         return series;
+    }
+
+    public static List<BarModel> sortBarsList(List<BarModel> rawBars) {
+        return rawBars.stream()
+                .sorted(Comparator.comparing(bar -> ZonedDateTime.parse(bar.getBeginTime())))
+                .toList();
+    }
+
+    public static List<BarModel> removeDuplicatesFromBarsList(List<BarModel> rawBars) {
+        if (rawBars.size() <= 1) {
+            return rawBars;
+        }
+        int count = 0;
+        List<BarModel> bars = new ArrayList<>();
+        for (int i = 0; i < rawBars.size() - 1; i++) {
+            BarModel currentBar = rawBars.get(i);
+            BarModel nextBar = rawBars.get(i + 1);
+            if (!currentBar.getBeginTime().equals(nextBar.getBeginTime())) {
+                bars.add(currentBar);
+            } else {
+                count++;
+            }
+        }
+        bars.add(rawBars.get(rawBars.size() - 1));
+        logger.info("Removed {} duplicate(s) from bars list.", count);
+        return bars;
     }
 
 }
