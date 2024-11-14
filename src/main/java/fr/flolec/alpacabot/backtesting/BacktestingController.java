@@ -1,7 +1,9 @@
 package fr.flolec.alpacabot.backtesting;
 
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarTimeFrame;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.PeriodLengthUnit;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import fr.flolec.alpacabot.alpacaapi.AlpacaApiException;
+import fr.flolec.alpacabot.alpacaapi.bar.BarTimeFrame;
+import fr.flolec.alpacabot.alpacaapi.bar.PeriodLengthUnit;
 import fr.flolec.alpacabot.strategies.StrategyEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +25,7 @@ public class BacktestingController {
                                       @RequestParam("periodLength") int periodLength,
                                       @RequestParam("periodLengthUnit") PeriodLengthUnit periodLengthUnit,
                                       @RequestParam("timeFrame") BarTimeFrame barTimeFrame,
-                                      @RequestParam("isCrypto") boolean isCrypto) {
+                                      @RequestParam("isCrypto") boolean isCrypto) throws AlpacaApiException, JsonProcessingException {
         return backtestingService.backtesting(strategy, symbol, periodLength, periodLengthUnit, barTimeFrame, isCrypto);
     }
 

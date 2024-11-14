@@ -1,7 +1,7 @@
 package fr.flolec.alpacabot.strategies.utils;
 
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarModel;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarTimeFrame;
+import fr.flolec.alpacabot.alpacaapi.bar.BarModel;
+import fr.flolec.alpacabot.alpacaapi.bar.BarTimeFrame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.Bar;
