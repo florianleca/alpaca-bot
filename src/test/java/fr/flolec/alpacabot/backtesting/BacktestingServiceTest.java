@@ -1,8 +1,8 @@
 package fr.flolec.alpacabot.backtesting;
 
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarTimeFrame;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.PeriodLengthUnit;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.historicalbar.HistoricalBarService;
+import fr.flolec.alpacabot.alpacaapi.bar.BarTimeFrame;
+import fr.flolec.alpacabot.alpacaapi.bar.PeriodLengthUnit;
+import fr.flolec.alpacabot.alpacaapi.bar.historicalbar.HistoricalBarService;
 import fr.flolec.alpacabot.strategies.StrategyEnum;
 import fr.flolec.alpacabot.strategies.squeezemomentum.SqueezeMomentumStrategyBuilder;
 import fr.flolec.alpacabot.strategies.utils.BarsUtils;
@@ -40,7 +40,7 @@ class BacktestingServiceTest {
     private BacktestingService backtestingService;
 
     @Test
-    void backtesting() {
+    void backtesting() throws Exception {
         when(historicalBarService.getHistoricalBars(any(), any(), anyLong(), any(), anyBoolean())).thenReturn(new ArrayList<>());
         when(applicationContext.getBean(SqueezeMomentumStrategyBuilder.class)).thenReturn(new SqueezeMomentumStrategyBuilder(20, 2.0, 20, 1.5, 6));
 

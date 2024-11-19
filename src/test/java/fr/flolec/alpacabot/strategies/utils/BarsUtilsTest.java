@@ -1,7 +1,7 @@
 package fr.flolec.alpacabot.strategies.utils;
 
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarModel;
-import fr.flolec.alpacabot.alpacaapi.httprequests.bar.BarTimeFrame;
+import fr.flolec.alpacabot.alpacaapi.bar.BarModel;
+import fr.flolec.alpacabot.alpacaapi.bar.BarTimeFrame;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.ta4j.core.Bar;
