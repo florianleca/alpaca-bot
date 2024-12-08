@@ -7,8 +7,6 @@ import fr.flolec.alpacabot.alpacaapi.position.PositionModel;
 import fr.flolec.alpacabot.alpacaapi.position.PositionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
@@ -27,7 +25,6 @@ import static org.mockito.Mockito.spy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
-@ExtendWith(MockitoExtension.class)
 @RestClientTest(PositionService.class)
 @ContextConfiguration(classes = {
         RestClientConfiguration.class,

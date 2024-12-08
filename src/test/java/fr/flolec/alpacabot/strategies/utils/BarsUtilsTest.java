@@ -94,12 +94,12 @@ class BarsUtilsTest {
 
         List<BarModel> sortedBars = BarsUtils.sortBarsList(rawBars);
 
-        assertEquals("2021-01-01T01:00:00Z", sortedBars.get(0).getBeginTime());
-        assertEquals("2021-01-01T02:00:00Z", sortedBars.get(1).getBeginTime());
-        assertEquals("2021-01-01T03:00:00Z", sortedBars.get(2).getBeginTime());
-        assertEquals("2021-01-01T04:00:00Z", sortedBars.get(3).getBeginTime());
-        assertEquals("2021-01-01T05:00:00Z", sortedBars.get(4).getBeginTime());
-        assertEquals("2021-01-01T06:00:00Z", sortedBars.get(5).getBeginTime());
+        assertEquals(Instant.parse("2021-01-01T01:00:00Z"), sortedBars.get(0).getBeginTime());
+        assertEquals(Instant.parse("2021-01-01T02:00:00Z"), sortedBars.get(1).getBeginTime());
+        assertEquals(Instant.parse("2021-01-01T04:00:00Z"), sortedBars.get(3).getBeginTime());
+        assertEquals(Instant.parse("2021-01-01T05:00:00Z"), sortedBars.get(4).getBeginTime());
+        assertEquals(Instant.parse("2021-01-01T03:00:00Z"), sortedBars.get(2).getBeginTime());
+        assertEquals(Instant.parse("2021-01-01T06:00:00Z"), sortedBars.get(5).getBeginTime());
     }
 
     @Test
@@ -114,8 +114,8 @@ class BarsUtilsTest {
         List<BarModel> bars = BarsUtils.removeDuplicatesFromBarsList(rawBars);
 
         assertEquals(2, bars.size());
-        assertEquals("2021-01-01T01:00:00Z", bars.get(0).getBeginTime());
-        assertEquals("2021-01-01T03:00:00Z", bars.get(1).getBeginTime());
+        assertEquals(Instant.parse("2021-01-01T01:00:00Z"), bars.get(0).getBeginTime());
+        assertEquals(Instant.parse("2021-01-01T03:00:00Z"), bars.get(1).getBeginTime());
     }
 
     @Test

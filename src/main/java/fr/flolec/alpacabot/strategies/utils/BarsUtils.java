@@ -13,7 +13,10 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -32,7 +35,7 @@ public class BarsUtils {
         rawBars = BarsUtils.sortBarsList(rawBars);
         rawBars = BarsUtils.removeDuplicatesFromBarsList(rawBars);
         rawBars.forEach(bar -> {
-            ZonedDateTime barBeginTime = ZonedDateTime.parse(bar.getBeginTime());
+            ZonedDateTime barBeginTime = ZonedDateTime.ofInstant(bar.getBeginTime(), ZoneId.of("UTC"));
             ZonedDateTime barEndTime = barBeginTime.plus(barTimeFrame.getTemporalAmount());
             barSeries.addBar(barEndTime, bar.getOpen(), bar.getHigh(), bar.getLow(), bar.getClose(), bar.getVolume());
         });
@@ -75,7 +78,7 @@ public class BarsUtils {
 
     public static List<BarModel> sortBarsList(List<BarModel> rawBars) {
         return rawBars.stream()
-                .sorted(Comparator.comparing(bar -> ZonedDateTime.parse(bar.getBeginTime())))
+                .sorted(Comparator.comparing(BarModel::getBeginTime))
                 .toList();
     }
 

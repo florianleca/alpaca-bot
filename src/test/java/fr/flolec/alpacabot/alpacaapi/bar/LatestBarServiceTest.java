@@ -1,6 +1,8 @@
-package fr.flolec.alpacabot.alpacaapi;
+package fr.flolec.alpacabot.alpacaapi.bar;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import fr.flolec.alpacabot.alpacaapi.AlpacaApiException;
+import fr.flolec.alpacabot.alpacaapi.RestClientConfiguration;
 import fr.flolec.alpacabot.alpacaapi.asset.AssetModel;
 import fr.flolec.alpacabot.alpacaapi.bar.latestbar.LatestBarService;
 import org.junit.jupiter.api.Test;
