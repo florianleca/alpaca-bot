@@ -34,6 +34,8 @@ public class HistoricalBarService {
     private String uriCrypto;
     @Value("${ALPACA_DATA_HISTORICAL_BARS_URI_STOCKS}")
     private String uriStocks;
+    @Value("${MAX_BARS_PER_SYMBOL}")
+    private int maxBarsPerSymbol = 10;
 
     public HistoricalBarService(RestClient restClient, ObjectMapper objectMapper, BarModelRepository barModelRepository) {
         this.restClient = restClient;
@@ -122,6 +124,10 @@ public class HistoricalBarService {
     public List<String> loadHistoricalBars(String assetSymbol, int numberOfBars) throws AlpacaApiException, JsonProcessingException {
         List<BarModel> bars = getNumberOfHourlyBars(assetSymbol, numberOfBars);
         bars.forEach(barModelRepository::insertOrReplace);
+
+        // Clean excess bars
+        barModelRepository.cleanExcessBars(assetSymbol, maxBarsPerSymbol);
+
         return List.of(assetSymbol);
     }
 

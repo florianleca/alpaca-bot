@@ -45,6 +45,9 @@ class HistoricalBarServiceTest {
     @Value("${ALPACA_DATA_HISTORICAL_BARS_URI_STOCKS}")
     private String uriStocks;
 
+    @Value("${MAX_BARS_PER_SYMBOL}")
+    private int maxBarsPerSymbol = 10;
+
     @Autowired
     private HistoricalBarService historicalBarService;
 
@@ -157,6 +160,7 @@ class HistoricalBarServiceTest {
         List<String> assets = spiedHistoricalBarService.loadHistoricalBars("AAL", 2);
 
         verify(barModelRepository, times(2)).insertOrReplace(any());
+        verify(barModelRepository).cleanExcessBars("AAL", maxBarsPerSymbol);
         assertEquals(List.of("AAL"), assets);
     }
 
