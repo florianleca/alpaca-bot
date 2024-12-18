@@ -5,7 +5,6 @@ import fr.flolec.alpacabot.alpacaapi.AlpacaApiException;
 import fr.flolec.alpacabot.alpacaapi.bar.BarTimeFrame;
 import fr.flolec.alpacabot.alpacaapi.bar.PeriodLengthUnit;
 import fr.flolec.alpacabot.strategies.StrategyEnum;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,7 +13,6 @@ public class BacktestingController {
 
     private final BacktestingService backtestingService;
 
-    @Autowired
     public BacktestingController(BacktestingService backtestingService) {
         this.backtestingService = backtestingService;
     }
