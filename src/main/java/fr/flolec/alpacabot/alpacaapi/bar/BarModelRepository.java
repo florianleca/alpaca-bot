@@ -3,9 +3,14 @@ package fr.flolec.alpacabot.alpacaapi.bar;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.ReplaceOptions;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.Date;
+
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.group;
 
 @Repository
 public class BarModelRepository {
@@ -36,6 +41,16 @@ public class BarModelRepository {
 
     public void deleteAll() {
         mongoTemplate.dropCollection(BarModel.class);
+    }
+
+    public Date findOldestBeginTimeAmongLatestBySymbol() {
+        Aggregation aggregation = Aggregation.newAggregation(
+                // Group by symbol and search for most recent begin_time for each symbol
+                group("symbol").max("begin_time").as("latestBeginTime"),
+                // Search for oldest begin_time among these results
+                group().min("latestBeginTime").as("oldestBeginTime")
+        );
+        return mongoTemplate.aggregate(aggregation, BarModel.class, Date.class).getUniqueMappedResult();
     }
 
 }
